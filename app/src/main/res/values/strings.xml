@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">BiApp</string>
+    <string name="label_version_name">Version:</string>
+    <string name="label_version_code">Build:</string>
+    <string name="confirm_to_exit_app">Press again to exit</string>
+</resources>

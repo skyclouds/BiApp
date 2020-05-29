@@ -1,0 +1,3 @@
+rootProject.name='BiApp'
+include ':app'
+include ':biapp'

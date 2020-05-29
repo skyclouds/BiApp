@@ -1,0 +1,91 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 29
+        versionCode 1
+        versionName "0.0.1"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
+
+    dataBinding {
+        enabled = true
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
+    //引入libs下的所有aar
+    fileTree(dir: 'libs', include: '**/*.aar')
+            .each { File file ->
+                dependencies.add("implementation", [
+                        name: file.name.lastIndexOf('.').with {
+                            it != -1 ? file.name[0..<it] : file.name
+                        },
+                        ext : 'aar'
+                ])
+            }
+    //引入libs下的所有jar
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    //Gson
+    implementation 'com.google.code.gson:gson:2.8.6'
+    //RxPreferences
+    implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.0'
+    //RxJava
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
+    implementation 'com.github.akarnokd:rxjava2-extensions:0.20.10'
+    //timber
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+    //ConstraintLayout
+    implementation 'com.android.support.constraint:constraint-layout:2.0.0-beta6'
+    //Parceler
+    implementation 'org.parceler:parceler-api:1.1.12'
+    annotationProcessor 'org.parceler:parceler:1.1.12'
+    // Room
+    implementation 'android.arch.persistence.room:runtime:1.1.1'
+    annotationProcessor "android.arch.persistence.room:compiler:1.1.1"
+    implementation 'android.arch.persistence.room:testing:1.1.1'
+    // RxJava support for Room
+    implementation 'android.arch.persistence.room:rxjava2:1.1.1'
+//    //Leakcanary
+//    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.3'
+//    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.6.3'
+//    debugImplementation 'com.squareup.leakcanary:leakcanary-support-fragment:1.6.3'
+    // AndroidAsync
+    implementation 'com.koushikdutta.async:androidasync:2.2.1'
+    //Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.3.0'
+}

@@ -1,0 +1,12 @@
+<resources>
+    <!--Net-->
+    <string name="protocol_exception">Protocol error</string>
+    <string name="unknown_host_exception">Fail to find server</string>
+    <string name="http_exception">Http error</string>
+    <string name="connect_exception">Connection error</string>
+    <string name="timeout_exception">Timeout</string>
+    <string name="sll_exception">SLL error</string>
+    <string name="cert_exception">Cert error</string>
+    <string name="cert_alg_exception">Cert algorithm error</string>
+    <string name="server_not_found">Server not found</string>
+</resources>

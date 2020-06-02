@@ -12,6 +12,7 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Date;
@@ -111,10 +112,34 @@ public class CertUtil {
     }
 
     /**
+     * 签名数据
+     *
+     * @param privateKey
+     * @param data
+     * @param signAlg
+     * @return
+     * @throws Exception
+     */
+    public byte[] sign(RSAPrivateKey privateKey, byte[] data, String signAlg) {
+        byte[] sign = null;
+        try {
+            Signature signature = Signature.getInstance(signAlg);
+            signature.initSign(privateKey);
+            signature.update(data);
+            sign = signature.sign();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+        return sign;
+    }
+
+    /**
      * 验证签名数据
      *
      * @param publicKey
+     * @param data
      * @param sign
+     * @param signAlg
      * @return
      * @throws Exception
      */
@@ -131,30 +156,10 @@ public class CertUtil {
         return verify;
     }
 
-    /**
-     * 验证签名数据
-     *
-     * @param publicKey
-     * @param sign
-     * @return
-     * @throws Exception
-     */
-    public boolean verifySign(PublicKey publicKey, byte[] data, byte[] sign, String signAlg) {
-        boolean verify = false;
-        try {
-            Signature signature = Signature.getInstance(signAlg);
-            signature.initVerify(publicKey);
-            signature.update(data);
-            verify = signature.verify(sign);
-        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-            e.printStackTrace();
-        }
-        return verify;
-    }
-
 
     /**
      * 验证证书链
+     *
      * @param rootCertificate
      * @param collectionX509CertificateChain
      * @return

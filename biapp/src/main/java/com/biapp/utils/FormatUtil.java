@@ -49,6 +49,23 @@ public class FormatUtil {
     }
 
     /**
+     * @param appendChar
+     * @param length
+     * @return
+     */
+    public static String addAppend(char appendChar, int length, String data) {
+        StringBuffer append = new StringBuffer();
+        int dataLength = TextUtils.isEmpty(data) ? 0 : data.length();
+        if (!TextUtils.isEmpty(data)) {
+            append.append(data);
+        }
+        for (int i = 0; i < length - dataLength; i++) {
+            append.append(appendChar);
+        }
+        return append.toString();
+    }
+
+    /**
      * @param headChar
      * @param length
      * @return

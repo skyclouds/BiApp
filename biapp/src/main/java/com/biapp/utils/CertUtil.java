@@ -143,7 +143,7 @@ public class CertUtil {
      * @return
      * @throws Exception
      */
-    public boolean verifySign(RSAPublicKey publicKey, byte[] data, byte[] sign, String signAlg) {
+    public static boolean verifySign(RSAPublicKey publicKey, byte[] data, byte[] sign, String signAlg) {
         boolean verify = false;
         try {
             Signature signature = Signature.getInstance(signAlg);

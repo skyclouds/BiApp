@@ -73,6 +73,7 @@ public class RetrofitClient {
     private String host;
     private HttpHeader header;
     private SSLSocketFactory sslSocketFactory;
+    private X509TrustManager trustManager;
     private OkHttpClient.Builder okHttpClientBuilder;
     private OkHttpClient okHttpClient;
     private retrofit2.Retrofit.Builder retrofitBuilder;
@@ -219,7 +220,7 @@ public class RetrofitClient {
         okHttpClientBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
         //设置HTTPS协议
         if (this.sslSocketFactory != null) {
-            okHttpClientBuilder.sslSocketFactory(sslSocketFactory, Platform.get().trustManager(sslSocketFactory)).hostnameVerifier((hostname, session) -> true);
+            okHttpClientBuilder.sslSocketFactory(sslSocketFactory,trustManager);
         }
         //设置头部
         if (this.header != null && !this.header.getHeaders().isEmpty()) {
@@ -244,14 +245,14 @@ public class RetrofitClient {
                         TrustManagerFactory.getDefaultAlgorithm());
                 trustManagerFactory.init(trustStore);
                 TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-                final X509TrustManager origTrustmanager = (X509TrustManager) trustManagers[0];
+                trustManager = (X509TrustManager) trustManagers[0];
 
                 TrustManager[] wrappedTrustManagers = new TrustManager[]{
                         new X509TrustManager() {
 
                             @Override
                             public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                                origTrustmanager.checkClientTrusted(x509Certificates, authType);
+                                trustManager.checkClientTrusted(x509Certificates, authType);
                             }
 
                             @Override
@@ -261,7 +262,7 @@ public class RetrofitClient {
 
                             @Override
                             public X509Certificate[] getAcceptedIssuers() {
-                                return origTrustmanager.getAcceptedIssuers();
+                                return trustManager.getAcceptedIssuers();
                             }
                         }
                 };

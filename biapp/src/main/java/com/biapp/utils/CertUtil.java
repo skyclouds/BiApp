@@ -2,7 +2,9 @@ package com.biapp.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Principal;
@@ -14,6 +16,8 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -66,32 +70,77 @@ public class CertUtil {
         return publicKey;
     }
 
+    /**
+     * 将公钥16进制数据解析成RSAPublicKey类对象
+     *
+     * @param hex
+     * @return
+     */
+    public static RSAPublicKey hex2RSAPublicKey(String hex) {
+        RSAPublicKey publicKey = null;
+        try {
+            byte[] hexData = Bytes.fromHexString(hex);
+            byte[] tmp;
+            int index = 0;
+            // 公钥bits
+            int bits;
+            tmp = Bytes.subBytes(hexData, 0, 4);
+            index += 4;
+            bits = (tmp[0] & 0xFF) * 256 * 256 + (tmp[1] & 0xFF) * 256 + (tmp[2] & 0xFF);
+            // 公钥modulus
+            tmp = Bytes.subBytes(hexData, index, 256);
+            index += 256;
+            BigInteger modulus = new BigInteger(Bytes.toHexString(tmp), 16);
+            // 公钥exponent
+            tmp = Bytes.subBytes(hexData, index, 256);
+            index += 256;
+            BigInteger exponent = new BigInteger(Bytes.toHexString(tmp), 16);
+            RSAPublicKeySpec keySpec = new RSAPublicKeySpec(modulus, exponent);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            publicKey = (RSAPublicKey) keyFactory.generatePublic(keySpec);
+            return publicKey;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return publicKey;
+    }
 
     /**
-     * 公钥转PEM
+     * 公钥转PEM(PKCS1格式)
      *
      * @param publicKey
      * @return
      */
-    public static String publickey2PEM(RSAPublicKey publicKey) {
+    public static String publickey2PEMByPKCS1(RSAPublicKey publicKey) {
         String pem = "";
         StringBuffer buffer = new StringBuffer();
-        buffer.append("-----BEGIN PUBLIC KEY-----");
+        buffer.append("-----BEGIN RSA PUBLIC KEY-----");
         buffer.append(System.lineSeparator());
-        buffer.append(Bytes.toBase64String(publicKey.getEncoded()));
-        buffer.append("-----END PUBLIC KEY-----");
+        buffer.append(Bytes.toBase64String(publickey2PKCS1(publicKey)));
+        buffer.append(System.lineSeparator());
+        buffer.append("-----END RSA PUBLIC KEY-----");
         pem = buffer.toString();
         return pem;
     }
 
     /**
-     * 公钥转PKCS8
+     * 公钥转PEM(PKCS8格式)
      *
      * @param publicKey
      * @return
      */
-    public static String publickey2PKCS8(RSAPublicKey publicKey) {
-        return Bytes.toHexString(publicKey.getEncoded());
+    public static String publickey2PEMByPKCS8(RSAPublicKey publicKey) {
+        String pem = "";
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("-----BEGIN PUBLIC KEY-----");
+        buffer.append(System.lineSeparator());
+        buffer.append(Bytes.toBase64String(publickey2PKCS8(publicKey)));
+        buffer.append(System.lineSeparator());
+        buffer.append("-----END PUBLIC KEY-----");
+        pem = buffer.toString();
+        return pem;
     }
 
     /**
@@ -110,6 +159,17 @@ public class CertUtil {
         pkcs1 = Bytes.concat(new byte[]{0x30}, Bytes.getDERLen(pkcs1.length), pkcs1);
         return pkcs1;
     }
+
+    /**
+     * 公钥转PKCS8
+     *
+     * @param publicKey
+     * @return
+     */
+    public static byte[] publickey2PKCS8(RSAPublicKey publicKey) {
+        return publicKey.getEncoded();
+    }
+
 
     /**
      * 签名数据

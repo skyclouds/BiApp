@@ -50,27 +50,25 @@ public class CertTest {
     }
 
     @Test
-    public void pemByPKCS1Test(){
-        PrintfUtil.d("pem-pkcs1-publicKey",CertUtil.publicKey2PEMByPKCS1(CertUtil.hex2RSAPublicKey(publicKeyHex)));
-        PrintfUtil.d("pem-pkcs1-privateKey",CertUtil.privateKey2PEMByPKCS1(CertUtil.hex2RSAPrivateKey(privateKeyHex)));
-    }
+    public void pemTest(){
+        String pem_pkcs1_publickey=CertUtil.publicKey2PEMByPKCS1(CertUtil.hex2RSAPublicKey(publicKeyHex));
+        PrintfUtil.d("pem-pkcs1-publicKey",pem_pkcs1_publickey);
+        boolean check_pkcs1_publicKey=Bytes.equals(CertUtil.publicKey2PKCS1(CertUtil.pem2RSAPublicKey(pem_pkcs1_publickey)), CertUtil.publicKey2PKCS1(CertUtil.hex2RSAPublicKey(publicKeyHex)));
+        PrintfUtil.d("check_pkcs1_publicKey",check_pkcs1_publicKey+"");
 
-    @Test
-    public void pemByPKCS8Test(){
-        PrintfUtil.d("pem-pkcs8-publicKey",CertUtil.publicKey2PEMByPKCS8(CertUtil.hex2RSAPublicKey(publicKeyHex)));
-        PrintfUtil.d("pem-pkcs8-privateKey",CertUtil.privateKey2PEMByPKCS8(CertUtil.hex2RSAPrivateKey(privateKeyHex)));
-    }
+        String pem_pkcs1_privateKey=CertUtil.privateKey2PEMByPKCS1(CertUtil.hex2RSAPrivateKey(privateKeyHex));
+        PrintfUtil.d("pem-pkcs1-privateKey",pem_pkcs1_privateKey);
+        boolean check_pkcs1_privateKey=Bytes.equals(CertUtil.privateKey2PKCS1(CertUtil.pem2RSAPrivateKey(pem_pkcs1_privateKey)), CertUtil.privateKey2PKCS1(CertUtil.hex2RSAPrivateKey(privateKeyHex)));
+        PrintfUtil.d("check_pkcs1_privateKey",check_pkcs1_privateKey+"");
 
-    @Test
-    public void pkcs1Test(){
-        PrintfUtil.d("pkcs1-publicKey",Bytes.toBase64String(CertUtil.publicKey2PKCS1(CertUtil.hex2RSAPublicKey(publicKeyHex))));
-        PrintfUtil.d("pkcs1-privateKey",Bytes.toBase64String(CertUtil.privateKey2PKCS1(CertUtil.hex2RSAPrivateKey(privateKeyHex))));
-    }
+        String pem_pkcs8_publicKey=CertUtil.publicKey2PEMByPKCS8(CertUtil.hex2RSAPublicKey(publicKeyHex));
+        PrintfUtil.d("pem-pkcs8-publicKey",pem_pkcs8_publicKey);
+        boolean check_pkcs8_publicKey=Bytes.equals(CertUtil.publicKey2PKCS8(CertUtil.pem2RSAPublicKey(pem_pkcs8_publicKey)), CertUtil.publicKey2PKCS8(CertUtil.hex2RSAPublicKey(publicKeyHex)));
+        PrintfUtil.d("check_pkcs8_publicKey",check_pkcs8_publicKey+"");
 
-    @Test
-    public  void pkcs8Test(){
-        PrintfUtil.d("pkcs8-publicKey",Bytes.toBase64String(CertUtil.publicKey2PKCS8(CertUtil.hex2RSAPublicKey(publicKeyHex))));
-        PrintfUtil.d("pkcs8-privateKey",Bytes.toBase64String(CertUtil.privateKey2PKCS8(CertUtil.hex2RSAPrivateKey(privateKeyHex))));
+        String pem_pkcs8_privateKey=CertUtil.privateKey2PEMByPKCS8(CertUtil.hex2RSAPrivateKey(privateKeyHex));
+        PrintfUtil.d("pem-pkcs8-privateKey",pem_pkcs8_privateKey);
+        boolean check_pkcs8_privatekey=Bytes.equals(CertUtil.privateKey2PKCS8(CertUtil.pem2RSAPrivateKey(pem_pkcs8_privateKey)), CertUtil.privateKey2PKCS8(CertUtil.hex2RSAPrivateKey(privateKeyHex)));
+        PrintfUtil.d("check_pkcs8_privatekey",check_pkcs8_privatekey+"");
     }
-
 }

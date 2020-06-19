@@ -1,5 +1,7 @@
 package com.biapp.utils;
 
+import com.biapp.utils.TLVUtils.TLV;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -22,6 +24,7 @@ import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import aura.data.Bytes;
 
@@ -70,6 +73,116 @@ public class CertUtil {
     }
 
     /**
+     * PEM转RSAPublicKey
+     *
+     * @param pem
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public static RSAPublicKey pem2RSAPublicKey(String pem) throws IllegalArgumentException {
+        RSAPublicKey publicKey = null;
+        try {
+            if (pem.startsWith("-----BEGIN RSA PUBLIC KEY-----") && pem.endsWith("-----END RSA PUBLIC KEY-----")) {
+                // PKCS1格式
+                pem = pem.replace("-----BEGIN RSA PUBLIC KEY-----", "");
+                pem = pem.replace("-----END RSA PUBLIC KEY-----", "");
+                pem = FormatUtil.removeAllSpace(pem);
+                byte[] pkcs1 = Bytes.fromBase64String(pem);
+                List<TLV> tls = TLVUtils.parseDER(pkcs1);
+                BigInteger modulus = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(0).getValue()), 16);
+                BigInteger exponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(1).getValue()), 16);
+                RSAPublicKeySpec keySpec = new RSAPublicKeySpec(modulus, exponent);
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                publicKey = (RSAPublicKey) keyFactory.generatePublic(keySpec);
+            } else if (pem.startsWith("-----BEGIN PUBLIC KEY-----") && pem.endsWith("-----END PUBLIC KEY-----")) {
+                // PKCS8格式
+                pem = pem.replace("-----BEGIN PUBLIC KEY-----", "");
+                pem = pem.replace("-----END PUBLIC KEY-----", "");
+                pem = FormatUtil.removeAllSpace(pem);
+                byte[] pkcs8 = Bytes.fromBase64String(pem);
+                List<TLV> tls = TLVUtils.parseDER(pkcs8);
+                BigInteger modulus = new BigInteger(
+                        Bytes.toHexString(
+                                tls.get(0).getChildren().get(1).getChildren().get(0).getChildren().get(0).getValue()),
+                        16);
+                BigInteger exponent = new BigInteger(
+                        Bytes.toHexString(
+                                tls.get(0).getChildren().get(1).getChildren().get(0).getChildren().get(1).getValue()),
+                        16);
+                RSAPublicKeySpec keySpec = new RSAPublicKeySpec(modulus, exponent);
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                publicKey = (RSAPublicKey) keyFactory.generatePublic(keySpec);
+            } else {
+                throw new IllegalArgumentException("parse PEM foramt error");
+            }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return publicKey;
+    }
+
+    /**
+     * PEM转RSAPrivateCrtKey
+     *
+     * @param pem
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public static RSAPrivateCrtKey pem2RSAPrivateKey(String pem) throws IllegalArgumentException {
+        RSAPrivateCrtKey privateKey = null;
+        try {
+            if (pem.startsWith("-----BEGIN RSA PRIVATE KEY-----") && pem.endsWith("-----END RSA PRIVATE KEY-----")) {
+                // PKCS1格式
+                pem = pem.replace("-----BEGIN RSA PRIVATE KEY-----", "");
+                pem = pem.replace("-----END RSA PRIVATE KEY-----", "");
+                pem = FormatUtil.removeAllSpace(pem);
+                byte[] pkcs1 = Bytes.fromBase64String(pem);
+                List<TLV> tls = TLVUtils.parseDER(pkcs1);
+                BigInteger modulus = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(1).getValue()), 16);
+                BigInteger publicExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getValue()), 16);
+                BigInteger privateExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(3).getValue()), 16);
+                BigInteger primeP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(4).getValue()), 16);
+                BigInteger primeQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(5).getValue()), 16);
+                BigInteger primeExponentP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(6).getValue()), 16);
+                BigInteger primeExponentQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(7).getValue()), 16);
+                BigInteger coefficient = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(8).getValue()), 16);
+                RSAPrivateCrtKeySpec keySpec = new RSAPrivateCrtKeySpec(modulus, publicExponent, privateExponent,
+                        primeP, primeQ, primeExponentP, primeExponentQ, coefficient);
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                privateKey = (RSAPrivateCrtKey) keyFactory.generatePrivate(keySpec);
+            } else if (pem.startsWith("-----BEGIN PRIVATE KEY-----") && pem.endsWith("-----END PRIVATE KEY-----")) {
+                // PKCS8格式
+                pem = pem.replace("-----BEGIN PRIVATE KEY-----", "");
+                pem = pem.replace("-----END PRIVATE KEY-----", "");
+                pem = FormatUtil.removeAllSpace(pem);
+                byte[] pkcs8 = Bytes.fromBase64String(pem);
+                List<TLV> tls = TLVUtils.parseDER(pkcs8);
+                BigInteger modulus = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(1).getValue()), 16);
+                BigInteger publicExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(2).getValue()), 16);
+                BigInteger privateExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(3).getValue()), 16);
+                BigInteger primeP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(4).getValue()), 16);
+                BigInteger primeQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(5).getValue()), 16);
+                BigInteger primeExponentP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(6).getValue()), 16);
+                BigInteger primeExponentQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(7).getValue()), 16);
+                BigInteger coefficient = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(8).getValue()), 16);
+                RSAPrivateCrtKeySpec keySpec = new RSAPrivateCrtKeySpec(modulus, publicExponent, privateExponent,
+                        primeP, primeQ, primeExponentP, primeExponentQ, coefficient);
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                privateKey = (RSAPrivateCrtKey) keyFactory.generatePrivate(keySpec);
+            } else {
+                throw new IllegalArgumentException("parse PEM foramt error");
+            }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return privateKey;
+    }
+
+    /**
      * 将公钥16进制数据解析成RSAPublicKey类对象
      *
      * @param hex
@@ -107,7 +220,7 @@ public class CertUtil {
     }
 
     /**
-     * 将私钥钥16进制数据解析成RSAPrivateKey类对象
+     * 将私钥16进制数据解析成RSAPrivateCrtKey类对象
      *
      * @param hex
      * @return
@@ -193,7 +306,7 @@ public class CertUtil {
     }
 
     /**
-     * 公钥转PEM(PKCS1格式)
+     * 私钥转PEM(PKCS1格式)
      *
      * @param privateKey
      * @return
@@ -271,9 +384,9 @@ public class CertUtil {
     }
 
     /**
-     * 公钥转PKCS1
+     * 私钥转PKCS1
      *
-     * @param publicKey
+     * @param privateKey
      * @return
      */
     public static byte[] privateKey2PKCS1(RSAPrivateCrtKey privateKey) {
@@ -326,7 +439,7 @@ public class CertUtil {
         } else {
             pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
         }
-        //Version
+        // Version
         pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
         pkcs1 = Bytes.concat(new byte[] { 0x30 }, Bytes.getDERLen(pkcs1.length), pkcs1);
         return pkcs1;

@@ -74,10 +74,9 @@ public class TLVUtils {
             byte[] tag = new byte[] { tlvData[i++] };
             if (Bytes.equals(tag, new byte[] { 0x00 })) {
                 continue;
-            } else if (Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x01 })
-                    || Bytes.equals(tag, new byte[] { 0x03 }) || Bytes.equals(tag, new byte[] { 0x04 })
-                    || Bytes.equals(tag, new byte[] { (byte) 0xA3 }) || Bytes.equals(tag, new byte[] { 0x02 })
-                    || Bytes.equals(tag, new byte[] { (byte) 0xA0 })) {
+            } else if (Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x03 })
+                    || Bytes.equals(tag, new byte[] { 0x04 }) || Bytes.equals(tag, new byte[] { (byte) 0xA3 })
+                    || Bytes.equals(tag, new byte[] { 0x02 }) || Bytes.equals(tag, new byte[] { (byte) 0xA0 })) {
                 int length = tlvData[i++] & 0xFF;
                 if (length > 0x80) {
                     int lengthLen = length & 0x7F;
@@ -90,8 +89,8 @@ public class TLVUtils {
                 }
                 i += length;
                 TLV tlv = new TLV(tag, length, value);
-                if (Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x01 })
-                        || Bytes.equals(tag, new byte[] { 0x03 }) || Bytes.equals(tag, new byte[] { (byte) 0x04 })
+                if (Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x03 })
+                        || Bytes.equals(tag, new byte[] { (byte) 0x04 })
                         || Bytes.equals(tag, new byte[] { (byte) 0xA3 })) {
                     tlv.setChildren(parseDER(value));
                 }

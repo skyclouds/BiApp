@@ -68,12 +68,16 @@ public class TLVUtils {
      * @param tlvData
      * @return
      */
-    public static List<TLV> parseDER(byte[] tlvData) {
+    public static List<TLV> parseDER(byte[] tlvData) throws IllegalArgumentException {
         List<TLV> tlvs = new ArrayList<TLV>();
         for (int i = 0; i < tlvData.length;) {
             byte[] tag = new byte[] { tlvData[i++] };
-            if (Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x02 })
-                    || Bytes.equals(tag, new byte[] { 0x03 })) {
+            if (Bytes.equals(tag, new byte[] { 0x00 })) {
+                continue;
+            } else if (Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x01 })
+                    || Bytes.equals(tag, new byte[] { 0x03 }) || Bytes.equals(tag, new byte[] { 0x04 })
+                    || Bytes.equals(tag, new byte[] { (byte) 0xA3 }) || Bytes.equals(tag, new byte[] { 0x02 })
+                    || Bytes.equals(tag, new byte[] { (byte) 0xA0 })) {
                 int length = tlvData[i++] & 0xFF;
                 if (length > 0x80) {
                     int lengthLen = length & 0x7F;
@@ -81,13 +85,19 @@ public class TLVUtils {
                     i += lengthLen;
                 }
                 byte[] value = Bytes.subBytes(tlvData, i, length);
+                if (value.length != length) {
+                    throw new IllegalArgumentException("parse DER error");
+                }
                 i += length;
                 TLV tlv = new TLV(tag, length, value);
-                if ((Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x03 }))
-                        && i == tlvData.length) {
+                if (Bytes.equals(tag, new byte[] { 0x30 }) || Bytes.equals(tag, new byte[] { 0x01 })
+                        || Bytes.equals(tag, new byte[] { 0x03 }) || Bytes.equals(tag, new byte[] { (byte) 0x04 })
+                        || Bytes.equals(tag, new byte[] { (byte) 0xA3 })) {
                     tlv.setChildren(parseDER(value));
                 }
                 tlvs.add(tlv);
+            } else {
+                break;
             }
         }
         return tlvs;

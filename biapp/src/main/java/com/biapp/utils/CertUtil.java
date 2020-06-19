@@ -159,14 +159,14 @@ public class CertUtil {
                 pem = FormatUtil.removeAllSpace(pem);
                 byte[] pkcs8 = Bytes.fromBase64String(pem);
                 List<TLV> tls = TLVUtils.parseDER(pkcs8);
-                BigInteger modulus = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(1).getValue()), 16);
-                BigInteger publicExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(2).getValue()), 16);
-                BigInteger privateExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(3).getValue()), 16);
-                BigInteger primeP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(4).getValue()), 16);
-                BigInteger primeQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(5).getValue()), 16);
-                BigInteger primeExponentP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(6).getValue()), 16);
-                BigInteger primeExponentQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(7).getValue()), 16);
-                BigInteger coefficient = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(8).getValue()), 16);
+                BigInteger modulus = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(1).getValue()), 16);
+                BigInteger publicExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(2).getValue()), 16);
+                BigInteger privateExponent = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(3).getValue()), 16);
+                BigInteger primeP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(4).getValue()), 16);
+                BigInteger primeQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(5).getValue()), 16);
+                BigInteger primeExponentP = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(6).getValue()), 16);
+                BigInteger primeExponentQ = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(7).getValue()), 16);
+                BigInteger coefficient = new BigInteger(Bytes.toHexString(tls.get(0).getChildren().get(2).getChildren().get(0).getChildren().get(8).getValue()), 16);
                 RSAPrivateCrtKeySpec keySpec = new RSAPrivateCrtKeySpec(modulus, publicExponent, privateExponent,
                         primeP, primeQ, primeExponentP, primeExponentQ, coefficient);
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");

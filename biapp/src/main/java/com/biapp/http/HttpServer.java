@@ -137,7 +137,7 @@ public class HttpServer implements HttpServerRequestCallback {
                 default:
                     break;
             }
-        }else {
+        } else {
             sendResponse(BIApp.getContext().getString(R.string.server_not_found));
         }
     }

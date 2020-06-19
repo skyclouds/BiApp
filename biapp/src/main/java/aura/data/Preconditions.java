@@ -24,7 +24,7 @@ package aura.data;
  * exception was thrown communicate that its caller has made a mistake. This
  * allows constructs such as
  * <p>
- * 
+ *
  * <pre>
  * {@code
  * public static double sqrt(double value) {
@@ -39,7 +39,7 @@ package aura.data;
  * <p>
  * to be replaced with the more compact
  * <p>
- * 
+ *
  * <pre>
  * {@code
  * public static double sqrt(double value) {
@@ -52,7 +52,7 @@ package aura.data;
  * <p>
  * so that a hypothetical bad caller of this method, such as:
  * <p>
- * 
+ *
  * <pre>
  * {@code
  *   void exampleBadCaller() {
@@ -1486,7 +1486,7 @@ public final class Preconditions {
     static String format(String template, Object... args) {
         template = String.valueOf(template); // null -> "null"
 
-        args = args == null ? new Object[] { "(Object[])null" } : args;
+        args = args == null ? new Object[]{"(Object[])null"} : args;
 
         // start substituting the arguments into the '%s' placeholders
         StringBuilder builder = new StringBuilder(template.length() + 16 * args.length);

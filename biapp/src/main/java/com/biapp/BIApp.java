@@ -4,10 +4,10 @@ import android.app.Application;
 import android.content.Context;
 import android.os.StrictMode;
 
-
+import com.biapp.messenger.RxBusDefaults;
 import com.biapp.room.AppDatabase;
 import com.f2prateek.rx.preferences2.BuildConfig;
-import com.biapp.messenger.RxBusDefaults;
+
 import io.reactivex.plugins.RxJavaPlugins;
 import timber.log.Timber;
 
@@ -62,7 +62,7 @@ public class BIApp extends Application {
      */
     public void init() {
         initLog();
-        Timber.d(TAG ,"【init】");
+        Timber.d(TAG, "【init】");
         //init RxBus
         RxBusDefaults.get().setSendToSuperClassesAsWell(true);
         // init database.

@@ -98,7 +98,7 @@ public final class Booleans {
      * @param a the first {@code boolean} to compare
      * @param b the second {@code boolean} to compare
      * @return a positive number if only {@code a} is {@code true}, a negative
-     *         number if only {@code
+     * number if only {@code
      * b}   is true, or zero if {@code a == b}
      */
     public static int compare(boolean a, boolean b) {
@@ -119,7 +119,7 @@ public final class Booleans {
      * @param array  an array of {@code boolean} values, possibly empty
      * @param target a primitive {@code boolean} value
      * @return {@code true} if {@code array[i] == target} for some value of
-     *         {@code i}
+     * {@code i}
      */
     public static boolean contains(boolean[] array, boolean target) {
         for (boolean value : array) {
@@ -142,7 +142,7 @@ public final class Booleans {
      * @param array  an array of {@code boolean} values, possibly empty
      * @param target a primitive {@code boolean} value
      * @return the least index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int indexOf(boolean[] array, boolean target) {
         return indexOf(array, target, 0, array.length);
@@ -178,7 +178,8 @@ public final class Booleans {
             return 0;
         }
 
-        outer: for (int i = 0; i < array.length - target.length + 1; i++) {
+        outer:
+        for (int i = 0; i < array.length - target.length + 1; i++) {
             for (int j = 0; j < target.length; j++) {
                 if (array[i + j] != target[j]) {
                     continue outer;
@@ -196,7 +197,7 @@ public final class Booleans {
      * @param array  an array of {@code boolean} values, possibly empty
      * @param target a primitive {@code boolean} value
      * @return the greatest index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int lastIndexOf(boolean[] array, boolean target) {
         return lastIndexOf(array, target, 0, array.length);
@@ -219,7 +220,7 @@ public final class Booleans {
      *
      * @param arrays zero or more {@code boolean} arrays
      * @return a single array containing all the values from the source arrays, in
-     *         order
+     * order
      */
     public static boolean[] concat(boolean[]... arrays) {
         int length = 0;
@@ -247,7 +248,7 @@ public final class Booleans {
      * @param padding   an extra amount to "grow" the array by if growth is
      *                  necessary
      * @return an array containing the values of {@code array}, with guaranteed
-     *         minimum length {@code
+     * minimum length {@code
      * minLength}
      * @throws IllegalArgumentException if {@code minLength} or {@code padding} is
      *                                  negative
@@ -338,7 +339,7 @@ public final class Booleans {
      *
      * @param collection a collection of {@code Boolean} objects
      * @return an array containing the same values as {@code collection}, in the
-     *         same order, converted to primitives
+     * same order, converted to primitives
      * @throws NullPointerException if {@code collection} or any of its elements is
      *                              null
      */

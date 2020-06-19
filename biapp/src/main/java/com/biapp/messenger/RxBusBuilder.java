@@ -1,6 +1,12 @@
 package com.biapp.messenger;
 
 
+import com.biapp.messenger.interfaces.IRxBusQueue;
+import com.biapp.messenger.rx.RxBusMode;
+import com.biapp.messenger.rx.RxDisposableManager;
+import com.biapp.messenger.rx.RxQueueKey;
+import com.biapp.messenger.rx.RxUtil;
+
 import org.reactivestreams.Subscriber;
 
 import java.util.ArrayList;
@@ -14,11 +20,6 @@ import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import io.reactivex.subscribers.DisposableSubscriber;
-import com.biapp.messenger.interfaces.IRxBusQueue;
-import com.biapp.messenger.rx.RxBusMode;
-import com.biapp.messenger.rx.RxDisposableManager;
-import com.biapp.messenger.rx.RxQueueKey;
-import com.biapp.messenger.rx.RxUtil;
 
 /**
  * Created by Michael on 01.05.2016.

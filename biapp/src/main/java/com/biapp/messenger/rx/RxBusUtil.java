@@ -1,13 +1,14 @@
 package com.biapp.messenger.rx;
 
 
+import com.biapp.messenger.interfaces.IRxBusQueue;
+
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
-import com.biapp.messenger.interfaces.IRxBusQueue;
 
 /**
  * Created by flisar on 02.05.2016.

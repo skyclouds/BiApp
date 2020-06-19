@@ -7,6 +7,7 @@ import timber.log.Timber;
 
 /**
  * BIService
+ *
  * @author Yun
  */
 public abstract class BIService extends Service {
@@ -14,24 +15,24 @@ public abstract class BIService extends Service {
 
     @Override
     public void onCreate() {
-        Timber.d(TAG , "【onCreate】");
+        Timber.d(TAG, "【onCreate】");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Timber.d(TAG , ":onStartCommand");
+        Timber.d(TAG, ":onStartCommand");
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Timber.d(TAG , "【onUnbind】");
+        Timber.d(TAG, "【onUnbind】");
         return super.onUnbind(intent);
     }
 
     @Override
     public void onDestroy() {
-        Timber.d(TAG , "【onDestroy】");
+        Timber.d(TAG, "【onDestroy】");
         super.onDestroy();
     }
 }

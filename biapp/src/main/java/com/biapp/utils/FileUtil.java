@@ -137,6 +137,7 @@ public class FileUtil {
 
     /**
      * 转为字节
+     *
      * @param input
      * @return
      */
@@ -218,7 +219,7 @@ public class FileUtil {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             try {
                 if (inputStream != null) {
                     inputStream.close();

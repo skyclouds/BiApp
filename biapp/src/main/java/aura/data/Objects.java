@@ -65,7 +65,7 @@ public final class Objects {
      * object that has three properties, {@code x}, {@code y}, and {@code z}, one
      * could write:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      * public int hashCode() {

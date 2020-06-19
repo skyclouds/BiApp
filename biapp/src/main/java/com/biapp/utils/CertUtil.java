@@ -369,17 +369,17 @@ public class CertUtil {
         byte[] pkcs1;
         if (publicKey.getPublicExponent() != null) {
             byte[] exponent = publicKey.getPublicExponent().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(exponent.length), exponent);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(exponent.length), exponent);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 });
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00});
         }
         if (publicKey.getModulus() != null) {
             byte[] modulus = publicKey.getModulus().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(modulus.length), modulus, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(modulus.length), modulus, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 });
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00});
         }
-        pkcs1 = Bytes.concat(new byte[] { 0x30 }, Bytes.getDERLen(pkcs1.length), pkcs1);
+        pkcs1 = Bytes.concat(new byte[]{0x30}, Bytes.getDERLen(pkcs1.length), pkcs1);
         return pkcs1;
     }
 
@@ -393,55 +393,55 @@ public class CertUtil {
         byte[] pkcs1 = null;
         if (privateKey.getCrtCoefficient() != null) {
             byte[] coefficient = privateKey.getCrtCoefficient().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(coefficient.length), coefficient);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(coefficient.length), coefficient);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 });
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00});
         }
         if (privateKey.getPrimeExponentQ() != null) {
             byte[] primeExponentQ = privateKey.getPrimeExponentQ().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(primeExponentQ.length), primeExponentQ, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(primeExponentQ.length), primeExponentQ, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
         }
         if (privateKey.getPrimeExponentP() != null) {
             byte[] primeExponentP = privateKey.getPrimeExponentP().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(primeExponentP.length), primeExponentP, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(primeExponentP.length), primeExponentP, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
         }
         if (privateKey.getPrimeQ() != null) {
             byte[] primeQ = privateKey.getPrimeQ().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(primeQ.length), primeQ, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(primeQ.length), primeQ, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
         }
         if (privateKey.getPrimeP() != null) {
             byte[] primeP = privateKey.getPrimeP().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(primeP.length), primeP, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(primeP.length), primeP, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
         }
         if (privateKey.getPrivateExponent() != null) {
             byte[] privateExponent = privateKey.getPrivateExponent().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(privateExponent.length), privateExponent, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(privateExponent.length), privateExponent, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
         }
         if (privateKey.getPublicExponent() != null) {
             byte[] publicExponent = privateKey.getPublicExponent().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(publicExponent.length), publicExponent, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(publicExponent.length), publicExponent, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
         }
         if (privateKey.getModulus() != null) {
             byte[] modulus = privateKey.getModulus().toByteArray();
-            pkcs1 = Bytes.concat(new byte[] { 0x02 }, Bytes.getDERLen(modulus.length), modulus, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02}, Bytes.getDERLen(modulus.length), modulus, pkcs1);
         } else {
-            pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
+            pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
         }
         // Version
-        pkcs1 = Bytes.concat(new byte[] { 0x02, 0x01, 0x00 }, pkcs1);
-        pkcs1 = Bytes.concat(new byte[] { 0x30 }, Bytes.getDERLen(pkcs1.length), pkcs1);
+        pkcs1 = Bytes.concat(new byte[]{0x02, 0x01, 0x00}, pkcs1);
+        pkcs1 = Bytes.concat(new byte[]{0x30}, Bytes.getDERLen(pkcs1.length), pkcs1);
         return pkcs1;
     }
 

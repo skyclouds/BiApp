@@ -1,13 +1,14 @@
 package com.biapp.messenger;
 
+import com.biapp.messenger.exceptions.RxBusEventIsNullException;
+import com.biapp.messenger.rx.RxQueueKey;
+
 import org.reactivestreams.Processor;
 
 import java.util.HashMap;
 
 import io.reactivex.Flowable;
 import io.reactivex.processors.PublishProcessor;
-import com.biapp.messenger.exceptions.RxBusEventIsNullException;
-import com.biapp.messenger.rx.RxQueueKey;
 
 /**
  * Created by Michael on 22.04.2016.

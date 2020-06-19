@@ -1,11 +1,12 @@
 package com.biapp.messenger.rx;
 
+import com.biapp.messenger.RxBus;
+import com.biapp.messenger.interfaces.IRxBusQueue;
+
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-import com.biapp.messenger.RxBus;
-import com.biapp.messenger.interfaces.IRxBusQueue;
 
 /**
  * Created by Michael on 28.04.2016.

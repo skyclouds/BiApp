@@ -1,9 +1,10 @@
 package com.biapp.messenger;
 
-import io.reactivex.functions.Consumer;
-import io.reactivex.subscribers.DisposableSubscriber;
 import com.biapp.messenger.interfaces.IRxBusQueue;
 import com.biapp.messenger.rx.RxUtil;
+
+import io.reactivex.functions.Consumer;
+import io.reactivex.subscribers.DisposableSubscriber;
 
 /**
  * Created by flisar on 02.05.2016.

@@ -94,8 +94,8 @@ public final class Ints {
      *
      * @param value any {@code long} value
      * @return the same value cast to {@code int} if it is in the range of the
-     *         {@code int} type, {@link Integer#MAX_VALUE} if it is too large, or
-     *         {@link Integer#MIN_VALUE} if it is too small
+     * {@code int} type, {@link Integer#MAX_VALUE} if it is too large, or
+     * {@link Integer#MIN_VALUE} if it is too small
      */
     public static int saturatedCast(long value) {
         if (value > Integer.MAX_VALUE) {
@@ -118,8 +118,8 @@ public final class Ints {
      * @param a the first {@code int} to compare
      * @param b the second {@code int} to compare
      * @return a negative value if {@code a} is less than {@code b}; a positive
-     *         value if {@code a} is greater than {@code b}; or zero if they are
-     *         equal
+     * value if {@code a} is greater than {@code b}; or zero if they are
+     * equal
      */
     public static int compare(int a, int b) {
         return (a < b) ? -1 : ((a > b) ? 1 : 0);
@@ -132,7 +132,7 @@ public final class Ints {
      * @param array  an array of {@code int} values, possibly empty
      * @param target a primitive {@code int} value
      * @return {@code true} if {@code array[i] == target} for some value of
-     *         {@code i}
+     * {@code i}
      */
     public static boolean contains(int[] array, int target) {
         for (int value : array) {
@@ -150,7 +150,7 @@ public final class Ints {
      * @param array  an array of {@code int} values, possibly empty
      * @param target a primitive {@code int} value
      * @return the least index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int indexOf(int[] array, int target) {
         return indexOf(array, target, 0, array.length);
@@ -186,7 +186,8 @@ public final class Ints {
             return 0;
         }
 
-        outer: for (int i = 0; i < array.length - target.length + 1; i++) {
+        outer:
+        for (int i = 0; i < array.length - target.length + 1; i++) {
             for (int j = 0; j < target.length; j++) {
                 if (array[i + j] != target[j]) {
                     continue outer;
@@ -204,7 +205,7 @@ public final class Ints {
      * @param array  an array of {@code int} values, possibly empty
      * @param target a primitive {@code int} value
      * @return the greatest index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int lastIndexOf(int[] array, int target) {
         return lastIndexOf(array, target, 0, array.length);
@@ -225,7 +226,7 @@ public final class Ints {
      *
      * @param array a <i>nonempty</i> array of {@code int} values
      * @return the value present in {@code array} that is less than or equal to
-     *         every other value in the array
+     * every other value in the array
      * @throws IllegalArgumentException if {@code array} is empty
      */
     public static int min(int... array) {
@@ -244,7 +245,7 @@ public final class Ints {
      *
      * @param array a <i>nonempty</i> array of {@code int} values
      * @return the value present in {@code array} that is greater than or equal to
-     *         every other value in the array
+     * every other value in the array
      * @throws IllegalArgumentException if {@code array} is empty
      */
     public static int max(int... array) {
@@ -265,7 +266,7 @@ public final class Ints {
      *
      * @param arrays zero or more {@code int} arrays
      * @return a single array containing all the values from the source arrays, in
-     *         order
+     * order
      */
     public static int[] concat(int[]... arrays) {
         int length = 0;
@@ -293,7 +294,7 @@ public final class Ints {
      * growable buffer.
      */
     public static byte[] toByteArray(int value) {
-        return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value };
+        return new byte[]{(byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value};
     }
 
     /**
@@ -338,7 +339,7 @@ public final class Ints {
      * @param padding   an extra amount to "grow" the array by if growth is
      *                  necessary
      * @return an array containing the values of {@code array}, with guaranteed
-     *         minimum length {@code
+     * minimum length {@code
      * minLength}
      * @throws IllegalArgumentException if {@code minLength} or {@code padding} is
      *                                  negative
@@ -479,7 +480,7 @@ public final class Ints {
      *
      * @param collection a collection of {@code Number} instances
      * @return an array containing the same values as {@code collection}, in the
-     *         same order, converted to primitives
+     * same order, converted to primitives
      * @throws NullPointerException if {@code collection} or any of its elements is
      *                              null
      * @since 1.0 (parameter was {@code Collection<Integer>} before 12.0)
@@ -666,8 +667,8 @@ public final class Ints {
      *
      * @param string the string representation of an integer value
      * @return the integer value represented by {@code string}, or {@code null} if
-     *         {@code string} has a length of zero or cannot be parsed as an integer
-     *         value
+     * {@code string} has a length of zero or cannot be parsed as an integer
+     * value
      * @since 11.0
      */
     public static Integer tryParse(String string) {
@@ -693,8 +694,8 @@ public final class Ints {
      * @param string the string representation of an integer value
      * @param radix  the radix to use when parsing
      * @return the integer value represented by {@code string} using {@code radix},
-     *         or {@code null} if {@code string} has a length of zero or cannot be
-     *         parsed as an integer value
+     * or {@code null} if {@code string} has a length of zero or cannot be
+     * parsed as an integer value
      * @throws IllegalArgumentException if {@code radix < Character.MIN_RADIX} or
      *                                  {@code radix >
      *                                  Character.MAX_RADIX}

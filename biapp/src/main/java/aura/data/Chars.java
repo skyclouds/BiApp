@@ -91,8 +91,8 @@ public final class Chars {
      *
      * @param value any {@code long} value
      * @return the same value cast to {@code char} if it is in the range of the
-     *         {@code char} type, {@link Character#MAX_VALUE} if it is too large, or
-     *         {@link Character#MIN_VALUE} if it is too small
+     * {@code char} type, {@link Character#MAX_VALUE} if it is too large, or
+     * {@link Character#MIN_VALUE} if it is too small
      */
     public static char saturatedCast(long value) {
         if (value > Character.MAX_VALUE) {
@@ -115,8 +115,8 @@ public final class Chars {
      * @param a the first {@code char} to compare
      * @param b the second {@code char} to compare
      * @return a negative value if {@code a} is less than {@code b}; a positive
-     *         value if {@code a} is greater than {@code b}; or zero if they are
-     *         equal
+     * value if {@code a} is greater than {@code b}; or zero if they are
+     * equal
      */
     public static int compare(char a, char b) {
         return a - b; // safe due to restricted range
@@ -129,7 +129,7 @@ public final class Chars {
      * @param array  an array of {@code char} values, possibly empty
      * @param target a primitive {@code char} value
      * @return {@code true} if {@code array[i] == target} for some value of
-     *         {@code i}
+     * {@code i}
      */
     public static boolean contains(char[] array, char target) {
         for (char value : array) {
@@ -147,7 +147,7 @@ public final class Chars {
      * @param array  an array of {@code char} values, possibly empty
      * @param target a primitive {@code char} value
      * @return the least index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int indexOf(char[] array, char target) {
         return indexOf(array, target, 0, array.length);
@@ -183,7 +183,8 @@ public final class Chars {
             return 0;
         }
 
-        outer: for (int i = 0; i < array.length - target.length + 1; i++) {
+        outer:
+        for (int i = 0; i < array.length - target.length + 1; i++) {
             for (int j = 0; j < target.length; j++) {
                 if (array[i + j] != target[j]) {
                     continue outer;
@@ -201,7 +202,7 @@ public final class Chars {
      * @param array  an array of {@code char} values, possibly empty
      * @param target a primitive {@code char} value
      * @return the greatest index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int lastIndexOf(char[] array, char target) {
         return lastIndexOf(array, target, 0, array.length);
@@ -222,7 +223,7 @@ public final class Chars {
      *
      * @param array a <i>nonempty</i> array of {@code char} values
      * @return the value present in {@code array} that is less than or equal to
-     *         every other value in the array
+     * every other value in the array
      * @throws IllegalArgumentException if {@code array} is empty
      */
     public static char min(char... array) {
@@ -241,7 +242,7 @@ public final class Chars {
      *
      * @param array a <i>nonempty</i> array of {@code char} values
      * @return the value present in {@code array} that is greater than or equal to
-     *         every other value in the array
+     * every other value in the array
      * @throws IllegalArgumentException if {@code array} is empty
      */
     public static char max(char... array) {
@@ -285,7 +286,7 @@ public final class Chars {
      *
      * @param arrays zero or more {@code char} arrays
      * @return a single array containing all the values from the source arrays, in
-     *         order
+     * order
      */
     public static char[] concat(char[]... arrays) {
         int length = 0;
@@ -313,7 +314,7 @@ public final class Chars {
      * growable buffer.
      */
     public static byte[] toByteArray(char value) {
-        return new byte[] { (byte) (value >> 8), (byte) value };
+        return new byte[]{(byte) (value >> 8), (byte) value};
     }
 
     /**
@@ -356,7 +357,7 @@ public final class Chars {
      * @param padding   an extra amount to "grow" the array by if growth is
      *                  necessary
      * @return an array containing the values of {@code array}, with guaranteed
-     *         minimum length {@code
+     * minimum length {@code
      * minLength}
      * @throws IllegalArgumentException if {@code minLength} or {@code padding} is
      *                                  negative
@@ -442,7 +443,7 @@ public final class Chars {
      *
      * @param collection a collection of {@code Character} objects
      * @return an array containing the same values as {@code collection}, in the
-     *         same order, converted to primitives
+     * same order, converted to primitives
      * @throws NullPointerException if {@code collection} or any of its elements is
      *                              null
      */

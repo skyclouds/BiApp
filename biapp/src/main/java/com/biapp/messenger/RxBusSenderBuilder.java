@@ -1,11 +1,11 @@
 package com.biapp.messenger;
 
-import org.reactivestreams.Processor;
-
 import com.biapp.messenger.exceptions.RxBusEventCastException;
 import com.biapp.messenger.exceptions.RxBusEventIsNullException;
 import com.biapp.messenger.exceptions.RxBusKeyIsNullException;
 import com.biapp.messenger.rx.RxQueueKey;
+
+import org.reactivestreams.Processor;
 
 /**
  * Created by Michael on 24.02.2017.

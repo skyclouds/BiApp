@@ -5,6 +5,7 @@ import android.util.Base64;
 
 import com.biapp.BIApp;
 import com.biapp.BIAppException;
+import com.biapp.lib.R;
 import com.biapp.utils.FormatUtil;
 import com.biapp.utils.GsonUtil;
 import com.biapp.utils.PrintfUtil;
@@ -56,13 +57,10 @@ import okhttp3.ConnectionPool;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
-import okhttp3.internal.platform.Platform;
 import retrofit2.HttpException;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import timber.log.Timber;
-
-import com.biapp.lib.R;
 
 /**
  * @author Yun
@@ -220,7 +218,7 @@ public class RetrofitClient {
         okHttpClientBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
         //设置HTTPS协议
         if (this.sslSocketFactory != null) {
-            okHttpClientBuilder.sslSocketFactory(sslSocketFactory,trustManager);
+            okHttpClientBuilder.sslSocketFactory(sslSocketFactory, trustManager);
         }
         //设置头部
         if (this.header != null && !this.header.getHeaders().isEmpty()) {

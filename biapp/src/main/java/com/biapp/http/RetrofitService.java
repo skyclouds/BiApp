@@ -13,7 +13,6 @@ import retrofit2.http.Streaming;
 import retrofit2.http.Url;
 
 /**
- *
  * @author Yun
  */
 public interface RetrofitService {

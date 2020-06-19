@@ -55,7 +55,7 @@ public final class Strings {
      *
      * @param string the string to test and possibly return
      * @return {@code string} itself if it is nonempty; {@code null} if it is empty
-     *         or null
+     * or null
      */
     public static String emptyToNull(String string) {
         return isNullOrEmpty(string) ? null : string;
@@ -155,7 +155,7 @@ public final class Strings {
      * @param string any non-null string
      * @param count  the number of times to repeat it; a nonnegative integer
      * @return a string containing {@code string} repeated {@code count} times (the
-     *         empty string if {@code count} is zero)
+     * empty string if {@code count} is zero)
      * @throws IllegalArgumentException if {@code count} is negative
      */
     public static String repeat(String string, int count) {
@@ -256,7 +256,7 @@ public final class Strings {
      * <p>
      * For examples:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      * "12.32" -> "1232"
@@ -292,7 +292,7 @@ public final class Strings {
      * <p>
      * Examples:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      *
@@ -394,7 +394,7 @@ public final class Strings {
      * <p>
      * Examples:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      * String data = "1234123412341234";
@@ -477,7 +477,7 @@ public final class Strings {
      * need to convert the charset from {@link StandardCharsets#ISO_8859_1} to
      * {@link StandardCharsets#GBK}:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      *  convert("ÖÐ", StandardCharsets.ISO_8859_1, StandardCharsets.GBK) -> "中"
@@ -499,7 +499,7 @@ public final class Strings {
      * Convert a string from a default charset {@link StandardCharsets#GBK} to
      * another charset.
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      *  convert("ÖÐ", StandardCharsets.GBK) -> "中"
@@ -546,11 +546,11 @@ public final class Strings {
      * Examples:
      * <p>
      * <blockquote>
-     * 
+     *
      * <pre>
      * "123" --> "313233"
      * </pre>
-     * 
+     *
      * </blockquote>
      */
     public static String extendToHexAscii(String data) {
@@ -566,7 +566,7 @@ public final class Strings {
      * <p>
      * Examples:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      *  "0" -> "1"
@@ -690,11 +690,11 @@ public final class Strings {
      * Examples:
      * <p>
      * <blockquote>
-     * 
+     *
      * <pre>
      * "123" --> "313233"
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param data string to extend.
@@ -714,12 +714,12 @@ public final class Strings {
      * Examples:
      * <p>
      * <blockquote>
-     * 
+     *
      * <pre>
      * "123" --> "313233"
      * extend("中", StandardCharsets.GBK) -> "D6D0"
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param data string to extend.
@@ -761,7 +761,7 @@ public final class Strings {
      * <p>
      * Examples:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      *      shrink("313233", StandardCharsets.ISO_8859_1) -> "123"
@@ -811,7 +811,7 @@ public final class Strings {
      * given length, then the data will be padded according to the alignment.
      * <p>
      * Examples:
-     * 
+     *
      * <pre>
      * {@code
      * Strings.fixLength("", 5, Bytes.ALIGN_LEFT, ' ') -> "00000"
@@ -834,7 +834,7 @@ public final class Strings {
      * given length, then the data will be padded according to the alignment.
      * <p>
      * Examples:
-     * 
+     *
      * <pre>
      * {@code
      * Strings.fixLength("", 5, Bytes.ALIGN_LEFT, ' ') -> "     "

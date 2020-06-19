@@ -17,13 +17,13 @@ public class AlgTest {
         byte[] key = new byte[16];
         byte[] iv = new byte[8];
         byte[] data = new byte[64];
-        byte[] encrypt= AlgUtils.encrypt(AlgUtils.SymmetryAlgorithm.RC2, AlgUtils.AlgorithmModel.CBC,
+        byte[] encrypt = AlgUtils.encrypt(AlgUtils.SymmetryAlgorithm.RC2, AlgUtils.AlgorithmModel.CBC,
                 AlgUtils.SymmetryPadding.PKCS5Padding, key, iv, data);
-        PrintfUtil.d("encrypt",Bytes.toHexString(encrypt));
-        PrintfUtil.d("data",Bytes.toHexString(AlgUtils.decrypt(AlgUtils.SymmetryAlgorithm.RC2,
-         AlgUtils.AlgorithmModel.CBC,
-        AlgUtils.SymmetryPadding.PKCS5Padding, key, iv, encrypt)));
-        PrintfUtil.d("hash",Bytes.toHexString(AlgUtils.hash(AlgUtils.HashAlgorithm.SHA256,data)));
-        PrintfUtil.d("mac",Bytes.toHexString(AlgUtils.mac(AlgUtils.MACAlgorithm.HmacSHA256,key,data)));
+        PrintfUtil.d("encrypt", Bytes.toHexString(encrypt));
+        PrintfUtil.d("data", Bytes.toHexString(AlgUtils.decrypt(AlgUtils.SymmetryAlgorithm.RC2,
+                AlgUtils.AlgorithmModel.CBC,
+                AlgUtils.SymmetryPadding.PKCS5Padding, key, iv, encrypt)));
+        PrintfUtil.d("hash", Bytes.toHexString(AlgUtils.hash(AlgUtils.HashAlgorithm.SHA256, data)));
+        PrintfUtil.d("mac", Bytes.toHexString(AlgUtils.mac(AlgUtils.MACAlgorithm.HmacSHA256, key, data)));
     }
 }

@@ -37,7 +37,7 @@ public class Bytes {
      * @param array  an array of {@code byte} values, possibly empty
      * @param target a primitive {@code byte} value
      * @return {@code true} if {@code array[i] == target} for some value of
-     *         {@code i}
+     * {@code i}
      */
     public static boolean contains(byte[] array, byte target) {
         for (byte value : array) {
@@ -55,7 +55,7 @@ public class Bytes {
      * @param array  an array of {@code byte} values, possibly empty
      * @param target a primitive {@code byte} value
      * @return the least index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int indexOf(byte[] array, byte target) {
         return indexOf(array, target, 0, array.length);
@@ -90,7 +90,8 @@ public class Bytes {
             return 0;
         }
 
-        outer: for (int i = 0; i < array.length - target.length + 1; i++) {
+        outer:
+        for (int i = 0; i < array.length - target.length + 1; i++) {
             for (int j = 0; j < target.length; j++) {
                 if (array[i + j] != target[j]) {
                     continue outer;
@@ -108,7 +109,7 @@ public class Bytes {
      * @param array  an array of {@code byte} values, possibly empty
      * @param target a primitive {@code byte} value
      * @return the greatest index {@code i} for which {@code array[i] == target}, or
-     *         {@code -1} if no such index exists.
+     * {@code -1} if no such index exists.
      */
     public static int lastIndexOf(byte[] array, byte target) {
         return lastIndexOf(array, target, 0, array.length);
@@ -130,7 +131,7 @@ public class Bytes {
      *
      * @param arrays zero or more {@code byte} arrays
      * @return a single array containing all the values from the source arrays, in
-     *         order
+     * order
      */
     public static byte[] concat(byte[]... arrays) {
         int length = 0;
@@ -158,7 +159,7 @@ public class Bytes {
      * @param padding   an extra amount to "grow" the array by if growth is
      *                  necessary
      * @return an array containing the values of {@code array}, with guaranteed
-     *         minimum length {@code
+     * minimum length {@code
      * minLength}
      * @throws IllegalArgumentException if {@code minLength} or {@code padding} is
      *                                  negative
@@ -180,7 +181,7 @@ public class Bytes {
      *
      * @param collection a collection of {@code Number} instances
      * @return an array containing the same values as {@code collection}, in the
-     *         same order, converted to primitives
+     * same order, converted to primitives
      * @throws NullPointerException if {@code collection} or any of its elements is
      *                              null
      * @since 1.0 (parameter was {@code Collection<Byte>} before 12.0)
@@ -434,12 +435,12 @@ public class Bytes {
      * Each byte in the array converted to a 2-character hex string with upper case.
      * <p>
      * Examples: <blockquote>
-     * 
+     *
      * <pre>
      * new byte[]{1, 32, 127} -> "01207F"
      * new byte[]{10, 11, 26} -> "0A0B1A"
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param data data
@@ -456,12 +457,12 @@ public class Bytes {
      * Each byte in the array converted to a 2-character hex string with upper case.
      * <p>
      * Examples: <blockquote>
-     * 
+     *
      * <pre>
      * new byte[]{1, 32, 127} -> "01207F"
      * new byte[]{10, 11, 26} -> "0A0B1A"
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param data data.
@@ -491,7 +492,7 @@ public class Bytes {
      * @see #toHexString(byte)
      */
     public static String toHexString(byte b) {
-        return toHexString(new byte[] { b });
+        return toHexString(new byte[]{b});
     }
 
     /**
@@ -499,7 +500,7 @@ public class Bytes {
      * and defalt padding '0'.
      * <p>
      * Examples:
-     * 
+     *
      * <pre>
      * {@code
      * fromHexString("01207F") -> new byte[]{0x1, 0x20, 0x7F}
@@ -522,7 +523,7 @@ public class Bytes {
      * Convert a hex string to a byte array with default padding '0'.
      * <p>
      * Examples:
-     * 
+     *
      * <pre>
      * {@code
      * Bytes.fromHexString("0a7", Bytes.ALIGN_LEFT, '0') -> new byte[]{0x0a, (byte) 0x70}
@@ -550,7 +551,7 @@ public class Bytes {
      * direction is none, then a {@link IllegalArgumentException} will be raised.
      * <p>
      * Examples:
-     * 
+     *
      * <pre>
      * {@code
      * Bytes.fromHexString("0a7", Bytes.ALIGN_LEFT, '0') -> new byte[]{0x0a, (byte) 0x70}
@@ -574,14 +575,14 @@ public class Bytes {
             // if yes, then add "0" on the right(low bit).
             // actually, it may not the perfect way to process odd string.
             switch (align) {
-            case ALIGN_RIGHT:
-                data = padding + data;
-                break;
-            case ALIGN_LEFT:
-                data = data + padding;
-                break;
-            default:
-                throw new IllegalArgumentException("The length of data should be even");
+                case ALIGN_RIGHT:
+                    data = padding + data;
+                    break;
+                case ALIGN_LEFT:
+                    data = data + padding;
+                    break;
+                default:
+                    throw new IllegalArgumentException("The length of data should be even");
             }
         }
 
@@ -599,13 +600,13 @@ public class Bytes {
      * Examples:
      * <p>
      * <blockquote>
-     * 
+     *
      * <pre>
      * 'a' -> 10
      * 'F' -> 15
      * '2' -> 2
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param ascii
@@ -636,13 +637,13 @@ public class Bytes {
      * Examples:
      * <p>
      * <blockquote>
-     * 
+     *
      * <pre>
      * 'a' -> 10
      * 'F' -> 15
      * '2' -> 2
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param ascii
@@ -700,20 +701,20 @@ public class Bytes {
      * according to some bytes.
      * <p>
      * If we have 4 length bytes, then the integer should be:
-     * 
+     *
      * <pre>
      * __ __ __ __ = b1 b2 b3 b4
      * </pre>
-     *
+     * <p>
      * For examples:
      *
      * <blockquote>
-     * 
+     *
      * <pre>
      * new byte[]{1, 2, 3} -> 66051.
      * new byte[]{1, 2} -> 258.
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param data byte array data.
@@ -732,20 +733,20 @@ public class Bytes {
      * according to some bytes.
      * <p>
      * If we have 4 length bytes, then the integer should be with big endian:
-     * 
+     *
      * <pre>
      * __ __ __ __ = b1 b2 b3 b4
      * </pre>
-     *
+     * <p>
      * For examples:
      *
      * <blockquote>
-     * 
+     *
      * <pre>
      * new byte[]{1, 2, 3} -> 66051 with big endian.
      * new byte[]{1, 2} -> 258 with big endian.
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param data byte array data.
@@ -791,12 +792,12 @@ public class Bytes {
      * For examples:
      * <p>
      * <blockquote>
-     * 
+     *
      * <pre>
      * 66051(length = 4) -> new byte[]{1, 2, 3}
      * 258(length=2) -> new byte[]{1, 2}
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param value  integer value.
@@ -835,12 +836,12 @@ public class Bytes {
      * For examples:
      * <p>
      * <blockquote>
-     * 
+     *
      * <pre>
      * 66051(length = 4) -> new byte[]{1, 2, 3} with high endian.
      * 258(length=2) -> new byte[]{1, 2} with high endian.
      * </pre>
-     * 
+     *
      * </blockquote>
      *
      * @param value  integer value.
@@ -889,7 +890,7 @@ public class Bytes {
      * <p>
      * For examples:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      * new byte[]{0x31, 0x32, 0x32, 0x61} -> new byte[]{0x12, 0x02a}
@@ -906,7 +907,7 @@ public class Bytes {
 
         byte[] hexes = new byte[asciis.length / 2];
 
-        for (int i = 0; i < asciis.length;) {
+        for (int i = 0; i < asciis.length; ) {
             // high byte
             byte highByte = fromHexAscii(asciis[(i++)]);
 
@@ -940,7 +941,7 @@ public class Bytes {
      * <p>
      * Examples:
      * <p>
-     * 
+     *
      * <pre>
      * {@code
      *      -127 -> 2
@@ -997,7 +998,7 @@ public class Bytes {
 
     /***
      * check lrc
-     * 
+     *
      * @param a
      * @return
      */
@@ -1015,10 +1016,11 @@ public class Bytes {
 
     /**
      * 转2进制字符串
+     *
      * @param b
      * @return
      */
-    public static String toBitString(byte b){
+    public static String toBitString(byte b) {
         return ""
                 + (byte) ((b >> 7) & 0x1) + (byte) ((b >> 6) & 0x1)
                 + (byte) ((b >> 5) & 0x1) + (byte) ((b >> 4) & 0x1)
@@ -1028,12 +1030,13 @@ public class Bytes {
 
     /**
      * 转2进制字符串
+     *
      * @param data
      * @return
      */
-    public static String toBitString(byte[] data){
-        StringBuffer buffer=new StringBuffer();
-        for(byte b:data){
+    public static String toBitString(byte[] data) {
+        StringBuffer buffer = new StringBuffer();
+        for (byte b : data) {
             buffer.append(toBitString(b));
         }
         return buffer.toString();
@@ -1041,37 +1044,36 @@ public class Bytes {
 
     /**
      * 二进制字符串转字节
+     *
      * @param bit
      * @return
      * @throws IllegalAccessException
      */
     public static byte[] bitString2Byte(String bit) throws IllegalArgumentException {
-        if(Strings.isNullOrEmpty(bit)||bit.length()%8!=0){
+        if (Strings.isNullOrEmpty(bit) || bit.length() % 8 != 0) {
             throw new IllegalArgumentException("The bit string is not valid.");
         }
-        byte[] result=new byte[bit.length()/8];
-        for(int i=0;i<bit.length()/8;i++){
-            String tmp=bit.substring(i*8,(i + 1) * 8);
-            result[i]= (byte) Short.parseShort(tmp,2);
+        byte[] result = new byte[bit.length() / 8];
+        for (int i = 0; i < bit.length() / 8; i++) {
+            String tmp = bit.substring(i * 8, (i + 1) * 8);
+            result[i] = (byte) Short.parseShort(tmp, 2);
         }
         return result;
     }
 
     /**
-     *
      * @param base64String
      * @return
      */
-    public static byte[] fromBase64String(String base64String){
+    public static byte[] fromBase64String(String base64String) {
         return Base64.decode(base64String, Base64.DEFAULT);
     }
 
     /**
-     *
      * @param data
      * @return
      */
-    public static String toBase64String(byte[] data){
+    public static String toBase64String(byte[] data) {
         return Base64.encodeToString(data, Base64.DEFAULT);
     }
 

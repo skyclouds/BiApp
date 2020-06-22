@@ -1,14 +1,21 @@
 package com.example.biapp;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
+import android.content.Context;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.biapp.utils.AlgUtils;
 import com.biapp.utils.CertUtil;
+import com.biapp.utils.FileUtil;
 import com.biapp.utils.PrintfUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 
 import aura.data.Bytes;
@@ -71,4 +78,21 @@ public class CertTest {
         boolean check_pkcs8_privatekey = Bytes.equals(CertUtil.privateKey2PKCS8(CertUtil.pem2RSAPrivateKey(pem_pkcs8_privateKey)), CertUtil.privateKey2PKCS8(CertUtil.hex2RSAPrivateKey(privateKeyHex)));
         PrintfUtil.d("check_pkcs8_privatekey", check_pkcs8_privatekey + "");
     }
+
+    @Test
+    public void rsaTest(){
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        X509Certificate cert=CertUtil.pem2Cert(FileUtil.readString(FileUtil.readAssetsFile(context,"apos_enc.crt"),"UTF-8"));
+        RSAPublicKey publicKey=(RSAPublicKey)cert.getPublicKey();
+        RSAPrivateCrtKey privateKey=CertUtil.pem2RSAPrivateKey(FileUtil.readString(FileUtil.readAssetsFile(context,"apos_enc.key"),"UTF-8"));
+        byte[] data ="1234567890abcdefghijklmnopqrstuvwxyz".getBytes();
+        byte[] sign=CertUtil.sign(privateKey,data,"SHA256withRSA");
+        PrintfUtil.d("sign", Bytes.toHexString(sign));
+        boolean verify=CertUtil.verifySign(publicKey,data,sign,"SHA256withRSA");
+        PrintfUtil.d("verify", verify+"");
+        byte[] encrypt=AlgUtils.encrypt(publicKey,data);
+        PrintfUtil.d("encrypt", Bytes.toHexString(encrypt));
+        PrintfUtil.d("decrypt",Bytes.equals(data,AlgUtils.decrypt(privateKey,encrypt))+"");
+    }
+
 }

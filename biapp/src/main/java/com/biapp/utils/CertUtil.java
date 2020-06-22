@@ -34,6 +34,24 @@ import aura.data.Bytes;
 public class CertUtil {
 
     /**
+     * PEM格式证书转X509Certificate
+     * @param pem
+     * @return
+     */
+    public static X509Certificate pem2Cert(String pem){
+        pem=pem.replaceAll("\r|\n", "");
+        if(pem.startsWith("-----BEGIN CERTIFICATE-----")&&pem.endsWith("-----END CERTIFICATE-----")){
+            pem = pem.replace("-----BEGIN CERTIFICATE-----", "");
+            pem = pem.replace("-----END CERTIFICATE-----", "");
+            pem = FormatUtil.removeAllSpace(pem);
+            return getCertificate(Bytes.fromBase64String(pem));
+        }
+        else {
+            throw new IllegalArgumentException("parse PEM foramt error");
+        }
+    }
+
+    /**
      * 获得证书
      *
      * @param certData
@@ -82,6 +100,7 @@ public class CertUtil {
     public static RSAPublicKey pem2RSAPublicKey(String pem) throws IllegalArgumentException {
         RSAPublicKey publicKey = null;
         try {
+            pem=pem.replaceAll("\r|\n", "");
             if (pem.startsWith("-----BEGIN RSA PUBLIC KEY-----") && pem.endsWith("-----END RSA PUBLIC KEY-----")) {
                 // PKCS1格式
                 pem = pem.replace("-----BEGIN RSA PUBLIC KEY-----", "");
@@ -133,6 +152,7 @@ public class CertUtil {
     public static RSAPrivateCrtKey pem2RSAPrivateKey(String pem) throws IllegalArgumentException {
         RSAPrivateCrtKey privateKey = null;
         try {
+            pem=pem.replaceAll("\r|\n", "");
             if (pem.startsWith("-----BEGIN RSA PRIVATE KEY-----") && pem.endsWith("-----END RSA PRIVATE KEY-----")) {
                 // PKCS1格式
                 pem = pem.replace("-----BEGIN RSA PRIVATE KEY-----", "");

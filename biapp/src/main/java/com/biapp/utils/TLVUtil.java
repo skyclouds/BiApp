@@ -8,7 +8,7 @@ import aura.data.Bytes;
 /**
  * @author yun
  */
-public class TLVUtils {
+public class TLVUtil {
 
     /**
      * @author yun

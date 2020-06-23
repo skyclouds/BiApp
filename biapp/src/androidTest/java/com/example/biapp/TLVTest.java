@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.biapp.utils.GsonUtil;
 import com.biapp.utils.PrintfUtil;
-import com.biapp.utils.TLVUtils;
+import com.biapp.utils.TLVUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,9 +21,9 @@ public class TLVTest {
 
     @Test
     public void test() {
-        List<TLVUtils.TLV> tlvs = TLVUtils.parseDER(Bytes.fromHexString(KDH_ENC));
+        List<TLVUtil.TLV> tlvs = TLVUtil.parseDER(Bytes.fromHexString(KDH_ENC));
         PrintfUtil.d("KDH_ENC", GsonUtil.toJson(tlvs));
-        tlvs = TLVUtils.parseDER(Bytes.fromHexString(PKCS1_PUBLIC_KEY));
+        tlvs = TLVUtil.parseDER(Bytes.fromHexString(PKCS1_PUBLIC_KEY));
         PrintfUtil.d("PKCS1_PUBLIC_KEY", GsonUtil.toJson(tlvs));
     }
 }

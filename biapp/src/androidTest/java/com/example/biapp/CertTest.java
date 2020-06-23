@@ -5,7 +5,7 @@ import android.content.Context;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.biapp.utils.AlgUtils;
+import com.biapp.utils.AlgUtil;
 import com.biapp.utils.CertUtil;
 import com.biapp.utils.FileUtil;
 import com.biapp.utils.PrintfUtil;
@@ -90,9 +90,9 @@ public class CertTest {
         PrintfUtil.d("sign", Bytes.toHexString(sign));
         boolean verify=CertUtil.verifySign(publicKey,data,sign,"SHA256withRSA");
         PrintfUtil.d("verify", verify+"");
-        byte[] encrypt=AlgUtils.encrypt(publicKey,data);
+        byte[] encrypt= AlgUtil.encrypt(publicKey,data);
         PrintfUtil.d("encrypt", Bytes.toHexString(encrypt));
-        PrintfUtil.d("decrypt",Bytes.equals(data,AlgUtils.decrypt(privateKey,encrypt))+"");
+        PrintfUtil.d("decrypt",Bytes.equals(data, AlgUtil.decrypt(privateKey,encrypt))+"");
     }
 
 }

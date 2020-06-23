@@ -1,4 +1,4 @@
-package com.biapp.utils;
+package com.ingenico.kdh.utils;
 
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -188,12 +188,28 @@ public class AlgUtil {
                     data = Bytes.concat(data, paddingData);
                 }
             }
+            //处理双倍长TDES
             if (algorithm == SymmetryAlgorithm.TDES && key.length == 16) {
-                byte[] leftKey = Bytes.subBytes(key, 0, 8);
-                byte[] rightKey = Bytes.subBytes(key, 8, 16);
-                byte[] step1 = encrypt(SymmetryAlgorithm.DES, mode, padding, leftKey, iv, data);
-                byte[] step2 = decrypt(SymmetryAlgorithm.DES, mode, padding, rightKey, iv, step1);
-                return encrypt(SymmetryAlgorithm.DES, mode, padding, leftKey, iv, step2);
+                if (mode == AlgorithmModel.ECB) {
+                    return encryptBy2DESECBNoPadding(key, data);
+                } else if (mode == AlgorithmModel.CBC) {
+                    byte[] enc = iv;
+                    byte[] result = null;
+                    for (int round = 0; round < data.length / 8; round++) {
+                        byte[] xor = new byte[8];
+                        byte[] tmp = Bytes.subBytes(data, round * 8, 8);
+                        for (int j = 0; j < xor.length; j++) {
+                            xor[j] = (byte) (enc[j] ^ tmp[j]);
+                        }
+                        enc = encryptBy2DESECBNoPadding(key, xor);
+                        if (result == null) {
+                            result = enc;
+                        } else {
+                            result = Bytes.concat(result, enc);
+                        }
+                    }
+                    return result;
+                }
             }
             SecretKeySpec keyspec = new SecretKeySpec(key, algorithm.getName());
             Cipher cipher = Cipher.getInstance(algorithm.getName() + "/" + mode.getName() + "/" + padding.getName());
@@ -219,6 +235,22 @@ public class AlgUtil {
         }
         return null;
     }
+
+    /**
+     * 双倍长DES ECB NoPadding
+     *
+     * @param key
+     * @param data
+     * @return
+     */
+    private static byte[] encryptBy2DESECBNoPadding(byte[] key, byte[] data) {
+        byte[] leftKey = Bytes.subBytes(key, 0, 8);
+        byte[] rightKey = Bytes.subBytes(key, 8, 16);
+        byte[] step1 = encrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, data);
+        byte[] step2 = decrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, rightKey, null, step1);
+        return encrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, step2);
+    }
+
 
     /**
      * RSA加密
@@ -261,12 +293,29 @@ public class AlgUtil {
             if (padding == SymmetryPadding.ZeroPadding) {
                 padding = SymmetryPadding.NoPadding;
             }
+            //处理双倍长TDES
             if (algorithm == SymmetryAlgorithm.TDES && key.length == 16) {
-                byte[] leftKey = Bytes.subBytes(key, 0, 8);
-                byte[] rightKey = Bytes.subBytes(key, 8, 16);
-                byte[] step1 = decrypt(SymmetryAlgorithm.DES, mode, padding, leftKey, iv, data);
-                byte[] step2 = encrypt(SymmetryAlgorithm.DES, mode, padding, rightKey, iv, step1);
-                return decrypt(SymmetryAlgorithm.DES, mode, padding, leftKey, iv, step2);
+                if (mode == AlgorithmModel.ECB) {
+                    return decryptBy2DESECBNoPadding(key, data);
+                } else if (mode == AlgorithmModel.CBC) {
+                    byte[] enc = iv;
+                    byte[] result = null;
+                    for (int round = 0; round < data.length / 8; round++) {
+                        byte[] tmp = Bytes.subBytes(data, round * 8, 8);
+                        byte[] dec = decryptBy2DESECBNoPadding(key, tmp);
+                        byte[] xor = new byte[8];
+                        for (int j = 0; j < xor.length; j++) {
+                            xor[j] = (byte) (enc[j] ^ dec[j]);
+                        }
+                        enc = tmp;
+                        if (result == null) {
+                            result = xor;
+                        } else {
+                            result = Bytes.concat(result, xor);
+                        }
+                    }
+                    return result;
+                }
             }
             SecretKeySpec keyspec = new SecretKeySpec(key, algorithm.getName());
             Cipher cipher = Cipher.getInstance(algorithm.getName() + "/" + mode.getName() + "/" + padding.getName());
@@ -291,6 +340,21 @@ public class AlgUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * 双倍长DES ECB NoPadding
+     *
+     * @param key
+     * @param data
+     * @return
+     */
+    private static byte[] decryptBy2DESECBNoPadding(byte[] key, byte[] data) {
+        byte[] leftKey = Bytes.subBytes(key, 0, 8);
+        byte[] rightKey = Bytes.subBytes(key, 8, 16);
+        byte[] step1 = decrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, data);
+        byte[] step2 = encrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, rightKey, null, step1);
+        return decrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, step2);
     }
 
     /**

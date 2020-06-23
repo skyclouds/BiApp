@@ -1,4 +1,4 @@
-package com.ingenico.kdh.utils;
+package com.biapp.utils;
 
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -31,7 +31,7 @@ import aura.data.Bytes;
 public class AlgUtil {
 
     /**
-     * 非对称算法
+     * 对称算法
      */
     public enum SymmetryAlgorithm {
 
@@ -85,7 +85,7 @@ public class AlgUtil {
     }
 
     /**
-     * 非对称填充
+     * 对称填充
      */
     public enum SymmetryPadding {
 
@@ -94,6 +94,34 @@ public class AlgUtil {
         private String name;
 
         private SymmetryPadding(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+
+    /**
+     * 非对称填充
+     */
+    public enum AsymmetricPadding {
+
+        NoPadding("NoPadding"),PKCS1Padding("PKCS1Padding"),OAEPWITHMD5AndMGF1Padding("OAEPWITHMD5AndMGF1Padding"), OAEPWITHSHA1AndMGF1Padding("OAEPWITHSHA1AndMGF1Padding"), OAEPWITHSHA256AndMGF1Padding("OAEPWITHSHA256AndMGF1Padding"), OAEPWITHSHA384AndMGF1Padding("OAEPWITHSHA384AndMGF1Padding"), OAEPWITHSHA512AndMGF1Padding("OAEPWITHSHA512AndMGF1Padding");
+
+        private String name;
+
+        private AsymmetricPadding(final String name) {
             this.name = name;
         }
 
@@ -256,12 +284,13 @@ public class AlgUtil {
      * RSA加密
      *
      * @param publicKey
+     * @param padding
      * @param data
      * @return
      */
-    public static byte[] encrypt(RSAPublicKey publicKey, byte[] data) {
+    public static byte[] encrypt(RSAPublicKey publicKey,AsymmetricPadding padding, byte[] data) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA");
+            Cipher cipher = Cipher.getInstance("RSA"+"/"+"ECB"+"/"+padding);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException e) {
@@ -361,12 +390,13 @@ public class AlgUtil {
      * RSA解密
      *
      * @param privateKey
+     * @param padding
      * @param data
      * @return
      */
-    public static byte[] decrypt(RSAPrivateKey privateKey, byte[] data) {
+    public static byte[] decrypt(RSAPrivateKey privateKey,AsymmetricPadding padding, byte[] data) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA");
+            Cipher cipher = Cipher.getInstance("RSA"+"/"+"ECB"+"/"+padding);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException e) {

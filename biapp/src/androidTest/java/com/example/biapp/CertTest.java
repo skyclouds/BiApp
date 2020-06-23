@@ -90,9 +90,9 @@ public class CertTest {
         PrintfUtil.d("sign", Bytes.toHexString(sign));
         boolean verify=CertUtil.verifySign(publicKey,data,sign,"SHA256withRSA");
         PrintfUtil.d("verify", verify+"");
-        byte[] encrypt= AlgUtil.encrypt(publicKey,data);
+        byte[] encrypt= AlgUtil.encrypt(publicKey, AlgUtil.AsymmetricPadding.OAEPWITHSHA256AndMGF1Padding,data);
         PrintfUtil.d("encrypt", Bytes.toHexString(encrypt));
-        PrintfUtil.d("decrypt",Bytes.equals(data, AlgUtil.decrypt(privateKey,encrypt))+"");
+        PrintfUtil.d("decrypt",Bytes.equals(data, AlgUtil.decrypt(privateKey,AlgUtil.AsymmetricPadding.OAEPWITHSHA256AndMGF1Padding,encrypt))+"");
     }
 
 }

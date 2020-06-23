@@ -382,7 +382,7 @@ public class AlgUtil {
     public static byte[] tdesKCV(byte[] key) {
         byte[] zero = new byte[8];
         Arrays.fill(zero, (byte) 0x00);
-        return encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.CBC, SymmetryPadding.ZeroPadding, zero, zero, key);
+        return encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.CBC, SymmetryPadding.ZeroPadding, key, zero, zero);
     }
 
     /**

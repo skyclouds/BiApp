@@ -6,11 +6,10 @@ import android.view.WindowManager;
 
 import androidx.fragment.app.FragmentActivity;
 
+import com.biapp.utils.PrintfUtil;
 import com.f2prateek.rx.preferences2.BuildConfig;
 
 import org.jetbrains.annotations.NotNull;
-
-import timber.log.Timber;
 
 /**
  * @author Yun
@@ -20,7 +19,7 @@ public abstract class BIActivity extends FragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Timber.d(TAG, "【onCreate】");
+        PrintfUtil.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         if (!BuildConfig.DEBUG) {
             // 禁止截屏
@@ -30,74 +29,74 @@ public abstract class BIActivity extends FragmentActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        Timber.d(TAG, "【onNewIntent】");
+        PrintfUtil.d(TAG, "onNewIntent");
         super.onNewIntent(intent);
     }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
-        Timber.i(TAG, ":onPostCreate");
+        PrintfUtil.d(TAG, "onPostCreate");
         super.onPostCreate(savedInstanceState);
     }
 
 
     @Override
     protected void onRestart() {
-        Timber.d(TAG, "【onRestart】");
+        PrintfUtil.d(TAG, "onRestart");
         super.onRestart();
     }
 
     @Override
     protected void onStart() {
-        Timber.i(TAG, ":onStart");
+        PrintfUtil.d(TAG, "onStart");
         super.onStart();
     }
 
     @Override
     public void onBackPressed() {
-        Timber.d(TAG, "【onBackPressed】");
+        PrintfUtil.i(TAG, "onBackPressed");
         super.onBackPressed();
     }
 
     @Override
     protected void onResume() {
-        Timber.d(TAG, "【onResume】");
+        PrintfUtil.d(TAG, "onResume");
         super.onResume();
     }
 
     @Override
     protected void onPostResume() {
-        Timber.i(TAG, ":onPostResume");
+        PrintfUtil.d(TAG, "onPostResume");
         super.onPostResume();
     }
 
     @Override
     protected void onPause() {
-        Timber.d(TAG, "【onPause】");
+        PrintfUtil.d(TAG, "onPause");
         super.onPause();
     }
 
     @Override
     public void onSaveInstanceState(@NotNull Bundle outState) {
-        Timber.i(TAG, ":onSaveInstanceState");
+        PrintfUtil.i(TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onStop() {
-        Timber.d(TAG, "【onStop】");
+        PrintfUtil.d(TAG, "onStop");
         super.onStop();
     }
 
     @Override
     public void finish() {
-        Timber.d(TAG, "【finish】");
+        PrintfUtil.d(TAG, "finish");
         super.finish();
     }
 
     @Override
     protected void onDestroy() {
-        Timber.d(TAG, "【onDestroy】");
+        PrintfUtil.d(TAG, "onDestroy");
         super.onDestroy();
     }
 }

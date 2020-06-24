@@ -6,6 +6,7 @@ import android.os.StrictMode;
 
 import com.biapp.messenger.RxBusDefaults;
 import com.biapp.room.AppDatabase;
+import com.biapp.utils.PrintfUtil;
 import com.f2prateek.rx.preferences2.BuildConfig;
 
 import io.reactivex.plugins.RxJavaPlugins;
@@ -35,7 +36,7 @@ public class BIApp extends Application {
 //            return;
 //        }
 //        LeakCanary.install(this);
-        Timber.d(TAG, "【onCreate】");
+        PrintfUtil.d(TAG, "onCreate");
         setRxJavaUnCatchErrorHandler();
     }
 
@@ -62,7 +63,7 @@ public class BIApp extends Application {
      */
     public void init() {
         initLog();
-        Timber.d(TAG, "【init】");
+        PrintfUtil.i(TAG, "init");
         //init RxBus
         RxBusDefaults.get().setSendToSuperClassesAsWell(true);
         // init database.
@@ -99,7 +100,7 @@ public class BIApp extends Application {
      * 退出应用
      */
     public void exit() {
-        Timber.d(TAG, "【exit】");
+        PrintfUtil.i(TAG, "exit");
         onDestory();
         android.os.Process.killProcess(android.os.Process.myPid());
         onTerminate();
@@ -109,12 +110,12 @@ public class BIApp extends Application {
      * Destory
      */
     public void onDestory() {
-        Timber.d(TAG, "【onDestory】");
+        PrintfUtil.d(TAG, "onDestory");
     }
 
     @Override
     public void onTerminate() {
-        Timber.d(TAG, "【onTerminate】");
+        PrintfUtil.i(TAG, "onTerminate");
         super.onTerminate();
     }
 
@@ -123,6 +124,6 @@ public class BIApp extends Application {
      * 设置Rxjava捕获异常
      */
     private void setRxJavaUnCatchErrorHandler() {
-        RxJavaPlugins.setErrorHandler(Timber::e);
+        RxJavaPlugins.setErrorHandler(PrintfUtil::e);
     }
 }

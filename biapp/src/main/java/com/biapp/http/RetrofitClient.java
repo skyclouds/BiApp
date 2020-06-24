@@ -47,6 +47,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import aura.data.Bytes;
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Single;
@@ -60,7 +61,7 @@ import okhttp3.RequestBody;
 import retrofit2.HttpException;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
-import timber.log.Timber;
+
 
 /**
  * @author Yun
@@ -222,7 +223,7 @@ public class RetrofitClient {
         }
         //设置头部
         if (this.header != null && !this.header.getHeaders().isEmpty()) {
-            Timber.d("【Header】" + GsonUtil.toJson(header.getHeaders()));
+            PrintfUtil.d("Header", GsonUtil.toJson(header.getHeaders()));
             okHttpClientBuilder.addInterceptor(header);
         }
         // 设置同时连接的个数和时间，默认5个，和每个保持时间为10s
@@ -311,7 +312,7 @@ public class RetrofitClient {
                 sslSocketFactory = sslContext.getSocketFactory();
             } else {
                 Certificate serverPubilcKeyCert = certificateFactory.generateCertificate(serverPubilcKeyCertInputStream);
-                Timber.d("【ServerPublicKey】" + serverPubilcKeyCert.getPublicKey());
+                PrintfUtil.d("ServerPublicKey", Bytes.toHexString(serverPubilcKeyCert.getPublicKey().getEncoded()));
                 KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
                 keyStore.load(null, serverPubilcKeyCertPwd == null ? null : serverPubilcKeyCertPwd.toCharArray());
                 keyStore.setCertificateEntry("server", serverPubilcKeyCert);
@@ -350,14 +351,14 @@ public class RetrofitClient {
         return buildService(RetrofitService.class)
                 .get(url)
                 .doOnSubscribe(disposable -> {
-                    Timber.d("【Host】" + host);
-                    Timber.d("【Url】" + url);
+                    PrintfUtil.d("Host", host);
+                    PrintfUtil.d("Url", url);
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .onErrorResumeNext(throwable -> {
-//                    Timber.d("【ErrorType】" + throwable.getClass().getName());
-//                    Timber.d("【ErrorMsg】" + throwable.getMessage());
+//                    PrintfUtil.d("ErrorType", throwable.getClass().getName());
+//                    PrintfUtil.d("ErrorMsg", throwable.getMessage());
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -370,13 +371,13 @@ public class RetrofitClient {
                         return Single.error(new SSLHandshakeException(SSL_EXCEPTION));
                     } else if (throwable instanceof HttpException) {
                         HttpException exception = (HttpException) throwable;
-                        return Single.error(new BIAppException(HTTP_EXCEPTION + "【" + exception.code() + "】"));
+                        return Single.error(new BIAppException(HTTP_EXCEPTION + "" + exception.code() + ""));
                     }
                     return Single.error(throwable);
                 })
                 .map(responseBody -> {
                     String response = responseBody.string();
-                    PrintfUtil.d("【Response】", response);
+                    PrintfUtil.d("Response", response);
                     return response;
                 });
     }
@@ -392,15 +393,15 @@ public class RetrofitClient {
         return buildService(RetrofitService.class)
                 .get(url, params)
                 .doOnSubscribe(disposable -> {
-                    Timber.d("【Host】" + host);
-                    Timber.d("【Url】" + url);
-                    PrintfUtil.d("【Params】", GsonUtil.toJson(params));
+                    PrintfUtil.d("Host", host);
+                    PrintfUtil.d("Url", url);
+                    PrintfUtil.d("Params", GsonUtil.toJson(params));
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .onErrorResumeNext(throwable -> {
-//                    Timber.d("【errorType】" + throwable.getClass().getName());
-//                    Timber.d("【errorMsg】" + throwable.getMessage());
+//                    PrintfUtil.d("errorType", throwable.getClass().getName());
+//                    PrintfUtil.d("errorMsg", throwable.getMessage());
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -413,13 +414,13 @@ public class RetrofitClient {
                         return Single.error(new SSLHandshakeException(SSL_EXCEPTION));
                     } else if (throwable instanceof HttpException) {
                         HttpException exception = (HttpException) throwable;
-                        return Single.error(new BIAppException(HTTP_EXCEPTION + "【" + exception.code() + "】"));
+                        return Single.error(new BIAppException(HTTP_EXCEPTION + "" + exception.code() + ""));
                     }
                     return Single.error(throwable);
                 })
                 .map(responseBody -> {
                     String response = responseBody.string();
-                    PrintfUtil.d("【Response】", response);
+                    PrintfUtil.d("Response", response);
                     return response;
                 });
     }
@@ -434,14 +435,14 @@ public class RetrofitClient {
         return buildService(RetrofitService.class)
                 .post(url)
                 .doOnSubscribe(disposable -> {
-                    Timber.d("【Host】" + host);
-                    Timber.d("【Url】" + url);
+                    PrintfUtil.d("Host", host);
+                    PrintfUtil.d("Url", url);
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .onErrorResumeNext(throwable -> {
-//                    Timber.d("【errorType】" + throwable.getClass().getName());
-//                    Timber.d("【errorMsg】" + throwable.getMessage());
+//                    PrintfUtil.d("errorType", throwable.getClass().getName());
+//                    PrintfUtil.d("errorMsg", throwable.getMessage());
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -454,13 +455,13 @@ public class RetrofitClient {
                         return Single.error(new SSLHandshakeException(SSL_EXCEPTION));
                     } else if (throwable instanceof HttpException) {
                         HttpException exception = (HttpException) throwable;
-                        return Single.error(new BIAppException(HTTP_EXCEPTION + "【" + exception.code() + "】"));
+                        return Single.error(new BIAppException(HTTP_EXCEPTION + "" + exception.code() + ""));
                     }
                     return Single.error(throwable);
                 })
                 .map(responseBody -> {
                     String response = responseBody.string();
-                    PrintfUtil.d("【Response】", response);
+                    PrintfUtil.d("Response", response);
                     return response;
                 });
     }
@@ -476,15 +477,15 @@ public class RetrofitClient {
         return buildService(RetrofitService.class)
                 .post(url, params)
                 .doOnSubscribe(disposable -> {
-                    Timber.d("【Host】" + host);
-                    Timber.d("【Url】" + url);
-                    PrintfUtil.d("【Params】", GsonUtil.toJson(params));
+                    PrintfUtil.d("Host", host);
+                    PrintfUtil.d("Url", url);
+                    PrintfUtil.d("Params", GsonUtil.toJson(params));
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .onErrorResumeNext(throwable -> {
-//                    Timber.d("【errorType】" + throwable.getClass().getName());
-//                    Timber.d("【errorMsg】" + throwable.getMessage());
+//                    PrintfUtil.d("errorType", throwable.getClass().getName());
+//                    PrintfUtil.d("errorMsg", throwable.getMessage());
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -497,13 +498,13 @@ public class RetrofitClient {
                         return Single.error(new SSLHandshakeException(SSL_EXCEPTION));
                     } else if (throwable instanceof HttpException) {
                         HttpException exception = (HttpException) throwable;
-                        return Single.error(new BIAppException(HTTP_EXCEPTION + "【" + exception.code() + "】"));
+                        return Single.error(new BIAppException(HTTP_EXCEPTION + "" + exception.code() + ""));
                     }
                     return Single.error(throwable);
                 })
                 .map(responseBody -> {
                     String response = responseBody.string();
-                    PrintfUtil.d("【Response】", response);
+                    PrintfUtil.d("Response", response);
                     return response;
                 });
     }
@@ -522,12 +523,12 @@ public class RetrofitClient {
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .doOnSubscribe(disposable -> {
-                    Timber.d("【Host】" + host);
-                    PrintfUtil.d("【Params】", data);
+                    PrintfUtil.d("Host", host);
+                    PrintfUtil.d("Params", data);
                 })
                 .onErrorResumeNext(throwable -> {
-//                    Timber.d("【errorType】" + throwable.getClass().getName());
-//                    Timber.d("【errorMsg】" + throwable.getMessage());
+//                    PrintfUtil.d("errorType", throwable.getClass().getName());
+//                    PrintfUtil.d("errorMsg", throwable.getMessage());
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -540,13 +541,13 @@ public class RetrofitClient {
                         return Single.error(new SSLHandshakeException(SSL_EXCEPTION));
                     } else if (throwable instanceof HttpException) {
                         HttpException exception = (HttpException) throwable;
-                        return Single.error(new BIAppException(HTTP_EXCEPTION + "【" + exception.code() + "】"));
+                        return Single.error(new BIAppException(HTTP_EXCEPTION + "" + exception.code() + ""));
                     }
                     return Single.error(throwable);
                 })
                 .map(responseBody -> {
                     String response = responseBody.string();
-                    PrintfUtil.d("【Response】", response);
+                    PrintfUtil.d("Response", response);
                     return response;
                 });
     }
@@ -565,13 +566,13 @@ public class RetrofitClient {
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .doOnSubscribe(disposable -> {
-                    Timber.d("【Host】" + host);
-                    Timber.d("【Url】" + url);
-                    PrintfUtil.d("【Params】", jsonStr);
+                    PrintfUtil.d("Host", host);
+                    PrintfUtil.d("Url", url);
+                    PrintfUtil.d("Params", jsonStr);
                 })
                 .onErrorResumeNext(throwable -> {
-//                    Timber.d("【errorType】" + throwable.getClass().getName());
-//                    Timber.e(throwable, "【errorMsg】" + throwable.getMessage());
+//                    PrintfUtil.d("errorType", throwable.getClass().getName());
+//                    PrintfUtil.e(throwable, "errorMsg", throwable.getMessage());
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -584,13 +585,13 @@ public class RetrofitClient {
                         return Single.error(new SSLHandshakeException(SSL_EXCEPTION));
                     } else if (throwable instanceof HttpException) {
                         HttpException exception = (HttpException) throwable;
-                        return Single.error(new BIAppException(HTTP_EXCEPTION + "【" + exception.code() + "】"));
+                        return Single.error(new BIAppException(HTTP_EXCEPTION + "" + exception.code() + ""));
                     }
                     return Single.error(throwable);
                 })
                 .map(responseBody -> {
                     String response = responseBody.string();
-                    PrintfUtil.d("【Response】", response);
+                    PrintfUtil.d("Response", response);
                     return response;
                 });
     }
@@ -623,7 +624,7 @@ public class RetrofitClient {
             if (saveFile.exists()) {
                 if (saveFile.length() > 1) {
                     String range = "bytes=" + (saveFile.length() - 1) + "-";
-                    Timber.d("[range]" + range);
+                    PrintfUtil.d("range", range);
                     addHeader("range", range);
                 }
             }
@@ -635,9 +636,9 @@ public class RetrofitClient {
                 .observeOn(Schedulers.io())
                 .doOnSubscribe(disposable -> {
                     downloadMap.put(tag, disposable);
-                    Timber.d("[host]" + RetrofitClient.this.getHost());
-                    Timber.d("[url]" + url);
-                    Timber.d("[saveFile]" + saveFile.getAbsolutePath());
+                    PrintfUtil.d("host", RetrofitClient.this.getHost());
+                    PrintfUtil.d("url", url);
+                    PrintfUtil.d("saveFile", saveFile.getAbsolutePath());
                     if (!saveFile.exists()) {
                         saveFile.createNewFile();
                     }
@@ -647,13 +648,13 @@ public class RetrofitClient {
                     progress.setUrl(host + url);
                     progress.setFilePath(saveFile.getAbsolutePath());
                     long contentLength = responseBody.contentLength();
-                    Timber.d("[contentLength]" + contentLength);
+                    PrintfUtil.d("contentLength", contentLength + "");
                     if (saveFile.length() > 1) {
                         progress.setCur(saveFile.length() - 1);
                     } else {
                         progress.setCur(0);
                     }
-                    Timber.d("[saveFileLength]" + (progress.getCur()));
+                    PrintfUtil.d("saveFileLength", progress.getCur() + "");
                     progress.setTotal(contentLength + saveFile.length());
                     try {
                         InputStream inputStream = responseBody.byteStream();
@@ -669,19 +670,16 @@ public class RetrofitClient {
                             }
                             progress.setCur(progress.getCur() + read);
                             progress.setPercent(FormatUtil.roundUp((double) progress.getCur() / (double) progress.getTotal() * 100));
-                            Timber.d("[percent]" + progress.getPercent());
+                            PrintfUtil.d("percent", progress.getPercent() + "");
                             emitter.onNext(progress);
                         }
                         inputStream.close();
-                        Timber.d("inputStream close");
                         randomAccessFile.close();
-                        Timber.d("fileChannel close");
                         emitter.onComplete();
                         return;
                     } catch (InterruptedIOException e) {
-                        Timber.d("interrupted");
                         if (e instanceof SocketTimeoutException) {
-                            Timber.d("socket timeout");
+                            PrintfUtil.i("SocketTimeoutException", "download cancel");
                             emitter.onError(e);
                             return;
                         }
@@ -691,17 +689,16 @@ public class RetrofitClient {
                 }))
                 .doOnError(throwable -> {
                     if (throwable instanceof InterruptedIOException) {
-                        Timber.d("error InterruptedIOException");
+                        PrintfUtil.i("InterruptedIOException", "download cancel");
                     } else {
                         if (saveFile.exists()) {
                             saveFile.delete();
                         }
-                        Timber.d("error and delete file");
                     }
                 })
                 .doOnDispose(() -> {
                     downloadMap.remove(tag);
-                    Timber.d("download dispose");
+                    PrintfUtil.i("Dispose", "download dispose");
                 });
     }
 

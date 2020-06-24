@@ -4,6 +4,7 @@ package com.biapp.http;
 import com.biapp.BIApp;
 import com.biapp.lib.R;
 import com.biapp.utils.GsonUtil;
+import com.biapp.utils.PrintfUtil;
 import com.koushikdutta.async.AsyncNetworkSocket;
 import com.koushikdutta.async.http.AsyncHttpPost;
 import com.koushikdutta.async.http.Multimap;
@@ -13,7 +14,7 @@ import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 
 import io.reactivex.disposables.Disposable;
-import timber.log.Timber;
+
 
 /**
  * HttpServer
@@ -22,6 +23,7 @@ import timber.log.Timber;
  */
 public class HttpServer implements HttpServerRequestCallback {
 
+    private final String TAG = this.getClass().getSimpleName();
 
     /**
      * 默认实例
@@ -57,7 +59,7 @@ public class HttpServer implements HttpServerRequestCallback {
     }
 
     private HttpServer() {
-        Timber.d("onCreate");
+        PrintfUtil.d(TAG,"onCreate");
         init();
     }
 
@@ -78,10 +80,10 @@ public class HttpServer implements HttpServerRequestCallback {
      * 开始监听
      */
     public void startListener(String[] interfaceNames) {
-        Timber.d("【startListener】");
+        PrintfUtil.d(TAG,"startListener");
         this.interfaceNames = interfaceNames;
         if (!listener) {
-            Timber.d("startListener");
+            PrintfUtil.d(TAG,"startListener");
             httpServer.get("[\\d\\D]*", this);
             httpServer.post("[\\d\\D]*", this);
             httpServer.listen(port);
@@ -93,7 +95,7 @@ public class HttpServer implements HttpServerRequestCallback {
      * 停止监听
      */
     public void stopListener() {
-        Timber.d("【stopListener】");
+        PrintfUtil.d(TAG,"stopListener");
         if (listener) {
             if (this.response != null) {
                 this.response.getSocket().close();
@@ -114,15 +116,15 @@ public class HttpServer implements HttpServerRequestCallback {
     public void onRequest(AsyncHttpServerRequest request, AsyncHttpServerResponse response) {
         this.response = response;
         String remoteIP = ((AsyncNetworkSocket) request.getSocket()).getRemoteAddress().getAddress().getHostAddress();
-        Timber.i("【RemoteIP】%s", remoteIP);
+        PrintfUtil.i("RemoteIP", remoteIP);
         String url = request.getPath();
-        Timber.d("【Url】%s", url);
+        PrintfUtil.d("Url", url);
         Multimap headers = request.getHeaders().getMultiMap();
-        Timber.d("【Header】%s", GsonUtil.toJson(headers));
+        PrintfUtil.d("Header", GsonUtil.toJson(headers));
         String method = request.getMethod();
-        Timber.d("【Method】%s", method);
+        PrintfUtil.d("Method", method);
         String Content_Type = request.getHeaders().get("Content-Type");
-        Timber.d("【Content-Type】%s", Content_Type);
+        PrintfUtil.d("Content-Type", Content_Type);
         String requestData = null;
         if (method.equals(AsyncHttpPost.METHOD)) {
             //获取post请求的参数
@@ -130,7 +132,7 @@ public class HttpServer implements HttpServerRequestCallback {
                 requestData = request.getBody().get().toString();
             }
         }
-        Timber.d("【RequestData】%s", requestData);
+        PrintfUtil.d("RequestData", requestData);
         //是否在监听
         if (isInListenerInterface(url)) {
             switch (url) {
@@ -148,7 +150,7 @@ public class HttpServer implements HttpServerRequestCallback {
      * @param responseData
      */
     private void sendResponse(String responseData) {
-        Timber.d("【Response】%s", responseData);
+        PrintfUtil.d("Response", responseData);
         response.send(responseData);
     }
 

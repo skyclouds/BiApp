@@ -3,7 +3,7 @@ package com.biapp;
 import android.app.Service;
 import android.content.Intent;
 
-import timber.log.Timber;
+import com.biapp.utils.PrintfUtil;
 
 /**
  * BIService
@@ -15,24 +15,24 @@ public abstract class BIService extends Service {
 
     @Override
     public void onCreate() {
-        Timber.d(TAG, "【onCreate】");
+        PrintfUtil.d(TAG, "onCreate");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Timber.d(TAG, ":onStartCommand");
+        PrintfUtil.d(TAG, ":onStartCommand");
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Timber.d(TAG, "【onUnbind】");
+        PrintfUtil.d(TAG, "onUnbind");
         return super.onUnbind(intent);
     }
 
     @Override
     public void onDestroy() {
-        Timber.d(TAG, "【onDestroy】");
+        PrintfUtil.d(TAG, "onDestroy");
         super.onDestroy();
     }
 }

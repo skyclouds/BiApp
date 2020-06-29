@@ -1,8 +1,23 @@
+import java.text.SimpleDateFormat
+
 apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
+
+
+
+    signingConfigs {
+        biAppKS {
+            storeFile file("biapp.keystore")
+            storePassword '20160506'
+            keyAlias 'BiApp'
+            keyPassword '20160506'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
 
     defaultConfig {
         applicationId "com.biapp.example"
@@ -16,8 +31,15 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.biAppKS
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "biapp_V${variant.versionName}_" + "${variant.buildType.name}.apk"
         }
     }
 

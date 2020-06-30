@@ -6,11 +6,13 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.engines.DESedeEngine;
 import org.bouncycastle.crypto.macs.CMac;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
@@ -290,7 +292,8 @@ public class AlgUtil {
      */
     public static byte[] encrypt(RSAPublicKey publicKey,AsymmetricPadding padding, byte[] data) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA"+"/"+"ECB"+"/"+padding);
+            Security.addProvider(new BouncyCastleProvider());
+            Cipher cipher = Cipher.getInstance("RSA"+"/"+"None"+"/"+padding);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException e) {
@@ -396,7 +399,8 @@ public class AlgUtil {
      */
     public static byte[] decrypt(RSAPrivateKey privateKey,AsymmetricPadding padding, byte[] data) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA"+"/"+"ECB"+"/"+padding);
+            Security.addProvider(new BouncyCastleProvider());
+            Cipher cipher = Cipher.getInstance("RSA"+"/"+"None"+"/"+padding);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException e) {

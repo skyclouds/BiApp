@@ -39,7 +39,7 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
-            outputFileName = "biapp_V${variant.versionName}_" + "${variant.buildType.name}.apk"
+            outputFileName = "biapp"+"_V${variant.versionName}" + "_${variant.buildType.name}"+"_${getGitCommit()}"+".apk"
         }
     }
 
@@ -55,6 +55,18 @@ android {
     lintOptions {
         abortOnError false
     }
+}
+
+def getGitCommit() {
+    def gitDir = new File("${new File("${rootDir}")}/.git")
+    if (!gitDir.isDirectory()) {
+        return 'non-git-build'
+    }
+
+    def gitCommitShortHash = 'git log -1 --pretty=%h'.execute([], rootDir).text.trim()
+
+    assert !gitCommitShortHash.isEmpty()
+    gitCommitShortHash
 }
 
 dependencies {

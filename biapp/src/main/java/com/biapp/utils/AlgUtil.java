@@ -539,7 +539,8 @@ public class AlgUtil {
      * @return
      */
     public static byte[] tdesIK(byte[] bdk, byte[] ksn) {
-        if (!(bdk.length == 16 || bdk.length == 24)) {
+        //TDES DUKPT 没有24字节密钥
+        if (bdk.length != 16) {
             throw new IllegalArgumentException("bdk length error");
         }
         if (ksn.length != 10) {
@@ -556,5 +557,74 @@ public class AlgUtil {
         xorTmp = encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding, xorTmp, null, ksnTmp);
         ik = Bytes.concat(ik, xorTmp);
         return ik;
+    }
+
+    /**
+     * AES DUKPT IK 衍生
+     *
+     * @param bdk
+     * @param ksn
+     * @return
+     */
+    public static byte[] aesIK(byte[] bdk, byte[] ksn) {
+        if (!(bdk.length == 16 || bdk.length == 24 || bdk.length == 32)) {
+            throw new IllegalArgumentException("bdk length error");
+        }
+        if (ksn.length != 12) {
+            throw new IllegalArgumentException("ksn length error");
+        }
+        byte[] ik=null;
+        byte[] ksnTmp = Bytes.subBytes(ksn, 0, 8);
+        // 衍生数据
+        byte[] derivData = new byte[16];
+        // set Version ID of the table structure
+        derivData[0] = 0x01;
+        // set Key Block Counter.1 for first block, 2 for second, etc.
+        derivData[1] = 0x01;
+        // set Key Usage Indicator
+        byte[] keyUsage = new byte[] { (byte) 0x80, 0x01 };
+        derivData[2] = keyUsage[0];
+        derivData[3] = keyUsage[1];
+        byte[] algIndi=new byte[2];
+        byte[] keyLength=new byte[2];
+        int blockNum=1;
+        switch (bdk.length) {
+            case 16:
+                algIndi[0] =0x00;
+                algIndi[1] =0x02;
+                keyLength[0]=0x00;
+                keyLength[1]=(byte)0x80;
+                blockNum=1;
+                break;
+            case 24:
+                algIndi[0] =0x00;
+                algIndi[1] =0x03;
+                keyLength[0]=0x00;
+                keyLength[1]=(byte)0xC0;
+                blockNum=2;
+                break;
+            case 32:
+                algIndi[0] =0x00;
+                algIndi[1] =0x04;
+                keyLength[0]=0x01;
+                keyLength[1]=0x00;
+                blockNum=3;
+                break;
+        }
+        derivData[4] = algIndi[0];
+        derivData[5] = algIndi[1];
+        derivData[6] = keyLength[0];
+        derivData[7] = keyLength[1];
+        System.arraycopy(ksnTmp, 0, derivData, 8, 8);
+        for(int i=0;i<blockNum;i++){
+            byte[] result = encrypt(SymmetryAlgorithm.AES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding,bdk,null,derivData);
+            if(Bytes.isNullOrEmpty(ik)){
+                ik=result;
+            }else{
+                ik=Bytes.concat(ik,result);
+            }
+            derivData[1]++;
+        }
+        return Bytes.subBytes(ik,0,bdk.length);
     }
 }

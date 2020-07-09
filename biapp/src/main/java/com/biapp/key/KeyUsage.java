@@ -12,7 +12,7 @@ package com.biapp.key;
  * @author Yun
  */
 public interface KeyUsage {
-    
+
 
     /**
      * BDK Base Derivation Key

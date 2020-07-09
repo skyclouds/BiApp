@@ -119,7 +119,7 @@ public class AlgUtil {
      */
     public enum AsymmetricPadding {
 
-        NoPadding("NoPadding"),PKCS1Padding("PKCS1Padding"),OAEPWITHMD5AndMGF1Padding("OAEPWITHMD5AndMGF1Padding"), OAEPWITHSHA1AndMGF1Padding("OAEPWITHSHA1AndMGF1Padding"), OAEPWITHSHA256AndMGF1Padding("OAEPWITHSHA256AndMGF1Padding"), OAEPWITHSHA384AndMGF1Padding("OAEPWITHSHA384AndMGF1Padding"), OAEPWITHSHA512AndMGF1Padding("OAEPWITHSHA512AndMGF1Padding");
+        NoPadding("NoPadding"), PKCS1Padding("PKCS1Padding"), OAEPWITHMD5AndMGF1Padding("OAEPWITHMD5AndMGF1Padding"), OAEPWITHSHA1AndMGF1Padding("OAEPWITHSHA1AndMGF1Padding"), OAEPWITHSHA256AndMGF1Padding("OAEPWITHSHA256AndMGF1Padding"), OAEPWITHSHA384AndMGF1Padding("OAEPWITHSHA384AndMGF1Padding"), OAEPWITHSHA512AndMGF1Padding("OAEPWITHSHA512AndMGF1Padding");
 
         private String name;
 
@@ -290,10 +290,10 @@ public class AlgUtil {
      * @param data
      * @return
      */
-    public static byte[] encrypt(RSAPublicKey publicKey,AsymmetricPadding padding, byte[] data) {
+    public static byte[] encrypt(RSAPublicKey publicKey, AsymmetricPadding padding, byte[] data) {
         try {
             Security.addProvider(new BouncyCastleProvider());
-            Cipher cipher = Cipher.getInstance("RSA"+"/"+"None"+"/"+padding);
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + "None" + "/" + padding);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException e) {
@@ -397,10 +397,10 @@ public class AlgUtil {
      * @param data
      * @return
      */
-    public static byte[] decrypt(RSAPrivateKey privateKey,AsymmetricPadding padding, byte[] data) {
+    public static byte[] decrypt(RSAPrivateKey privateKey, AsymmetricPadding padding, byte[] data) {
         try {
             Security.addProvider(new BouncyCastleProvider());
-            Cipher cipher = Cipher.getInstance("RSA"+"/"+"None"+"/"+padding);
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + "None" + "/" + padding);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException e) {
@@ -529,5 +529,32 @@ public class AlgUtil {
         mac.update(data, 0, data.length);
         mac.doFinal(cmac, 0);
         return cmac;
+    }
+
+    /**
+     * TDES DUKPT IK 衍生
+     *
+     * @param bdk
+     * @param ksn
+     * @return
+     */
+    public static byte[] tdesIK(byte[] bdk, byte[] ksn) {
+        if (!(bdk.length == 16 || bdk.length == 24)) {
+            throw new IllegalArgumentException("bdk length error");
+        }
+        if (ksn.length != 10) {
+            throw new IllegalArgumentException("ksn length error");
+        }
+        byte[] ik;
+        byte[] makeEBdk = new byte[]{(byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00};
+        byte[] ksnTmp = Bytes.subBytes(ksn, 0, 8);
+        //根据算法需要把原来的80个bit的KSN后21bit清零
+        ksnTmp[7] &= 0xE0;
+        ik = encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding, bdk, null, ksnTmp);
+        //bdk与makeEBdk异或
+        byte[] xorTmp = Bytes.xor(bdk, makeEBdk);
+        xorTmp = encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding, xorTmp, null, ksnTmp);
+        ik = Bytes.concat(ik, xorTmp);
+        return ik;
     }
 }

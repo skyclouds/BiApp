@@ -1,11 +1,8 @@
-import java.text.SimpleDateFormat
-
 apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
-
 
 
     signingConfigs {
@@ -39,7 +36,7 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
-            outputFileName = "biapp"+"_V${variant.versionName}" + "_${variant.buildType.name}"+"_${getGitCommit()}"+".apk"
+            outputFileName = "biapp" + "_V${variant.versionName}" + "_${variant.buildType.name}" + "_${getGitCommit()}" + ".apk"
         }
     }
 

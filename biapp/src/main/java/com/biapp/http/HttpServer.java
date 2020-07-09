@@ -59,7 +59,7 @@ public class HttpServer implements HttpServerRequestCallback {
     }
 
     private HttpServer() {
-        PrintfUtil.d(TAG,"onCreate");
+        PrintfUtil.d(TAG, "onCreate");
         init();
     }
 
@@ -80,10 +80,10 @@ public class HttpServer implements HttpServerRequestCallback {
      * 开始监听
      */
     public void startListener(String[] interfaceNames) {
-        PrintfUtil.d(TAG,"startListener");
+        PrintfUtil.d(TAG, "startListener");
         this.interfaceNames = interfaceNames;
         if (!listener) {
-            PrintfUtil.d(TAG,"startListener");
+            PrintfUtil.d(TAG, "startListener");
             httpServer.get("[\\d\\D]*", this);
             httpServer.post("[\\d\\D]*", this);
             httpServer.listen(port);
@@ -95,7 +95,7 @@ public class HttpServer implements HttpServerRequestCallback {
      * 停止监听
      */
     public void stopListener() {
-        PrintfUtil.d(TAG,"stopListener");
+        PrintfUtil.d(TAG, "stopListener");
         if (listener) {
             if (this.response != null) {
                 this.response.getSocket().close();

@@ -26,6 +26,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import aura.data.Bytes;
+import aura.data.Ints;
 
 /**
  * @author yun
@@ -573,7 +574,7 @@ public class AlgUtil {
         if (ksn.length != 12) {
             throw new IllegalArgumentException("ksn length error");
         }
-        byte[] ik=null;
+        byte[] ik = null;
         byte[] ksnTmp = Bytes.subBytes(ksn, 0, 8);
         // 衍生数据
         byte[] derivData = new byte[16];
@@ -582,33 +583,33 @@ public class AlgUtil {
         // set Key Block Counter.1 for first block, 2 for second, etc.
         derivData[1] = 0x01;
         // set Key Usage Indicator
-        byte[] keyUsage = new byte[] { (byte) 0x80, 0x01 };
+        byte[] keyUsage = new byte[]{(byte) 0x80, 0x01};
         derivData[2] = keyUsage[0];
         derivData[3] = keyUsage[1];
-        byte[] algIndi=new byte[2];
-        byte[] keyLength=new byte[2];
-        int blockNum=1;
+        byte[] algIndi = new byte[2];
+        byte[] keyLength = new byte[2];
+        int blockNum = 1;
         switch (bdk.length) {
             case 16:
-                algIndi[0] =0x00;
-                algIndi[1] =0x02;
-                keyLength[0]=0x00;
-                keyLength[1]=(byte)0x80;
-                blockNum=1;
+                algIndi[0] = 0x00;
+                algIndi[1] = 0x02;
+                keyLength[0] = 0x00;
+                keyLength[1] = (byte) 0x80;
+                blockNum = 1;
                 break;
             case 24:
-                algIndi[0] =0x00;
-                algIndi[1] =0x03;
-                keyLength[0]=0x00;
-                keyLength[1]=(byte)0xC0;
-                blockNum=2;
+                algIndi[0] = 0x00;
+                algIndi[1] = 0x03;
+                keyLength[0] = 0x00;
+                keyLength[1] = (byte) 0xC0;
+                blockNum = 2;
                 break;
             case 32:
-                algIndi[0] =0x00;
-                algIndi[1] =0x04;
-                keyLength[0]=0x01;
-                keyLength[1]=0x00;
-                blockNum=3;
+                algIndi[0] = 0x00;
+                algIndi[1] = 0x04;
+                keyLength[0] = 0x01;
+                keyLength[1] = 0x00;
+                blockNum = 3;
                 break;
         }
         derivData[4] = algIndi[0];
@@ -616,15 +617,61 @@ public class AlgUtil {
         derivData[6] = keyLength[0];
         derivData[7] = keyLength[1];
         System.arraycopy(ksnTmp, 0, derivData, 8, 8);
-        for(int i=0;i<blockNum;i++){
-            byte[] result = encrypt(SymmetryAlgorithm.AES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding,bdk,null,derivData);
-            if(Bytes.isNullOrEmpty(ik)){
-                ik=result;
-            }else{
-                ik=Bytes.concat(ik,result);
+        for (int i = 0; i < blockNum; i++) {
+            byte[] result = encrypt(SymmetryAlgorithm.AES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding, bdk, null, derivData);
+            if (Bytes.isNullOrEmpty(ik)) {
+                ik = result;
+            } else {
+                ik = Bytes.concat(ik, result);
             }
             derivData[1]++;
         }
-        return Bytes.subBytes(ik,0,bdk.length);
+        return Bytes.subBytes(ik, 0, bdk.length);
+    }
+
+    /**
+     * KSN+1
+     *
+     * @param ksn
+     * @return
+     */
+    public static String ksnAdd1(String ksn) {
+        String newKsn = "";
+        byte[] ksnData = Bytes.fromHexString(ksn);
+        if (ksnData.length == 10) {
+            byte[] iin = Bytes.subBytes(ksnData, 0, 3);
+            byte[] cid = Bytes.subBytes(ksnData, 3, 1);
+            byte[] gid = Bytes.subBytes(ksnData, 4, 1);
+            StringBuffer did_counter = new StringBuffer();
+            did_counter.append(Bytes.toBitString(ksnData[5]));
+            did_counter.append(Bytes.toBitString(ksnData[6]));
+            did_counter.append(Bytes.toBitString(ksnData[7]));
+            did_counter.append(Bytes.toBitString(ksnData[8]));
+            did_counter.append(Bytes.toBitString(ksnData[9]));
+            String did = did_counter.substring(0, 19);
+            if ("1111111111111111111".equals(did)) {
+                throw new IllegalArgumentException("ksn is already the largest");
+            }
+            String counter = did_counter.substring(19);
+            int did_value = Integer.parseInt(did, 2);
+            did_value++;
+            String new_did = Bytes.toBitString(Bytes.fromInt(did_value, 3)).substring(5);
+            newKsn = Bytes.toHexString(iin) + Bytes.toHexString(cid) + Bytes.toHexString(gid)
+                    + FormatUtil.addHead('0', 10, Long.toHexString(Long.parseLong(new_did + counter, 2))).toUpperCase();
+        } else if (ksnData.length == 12) {
+            String did = Bytes.toHexString(Bytes.subBytes(ksnData, 4, 4));
+            if ("FFFFFFFF".equals(did)) {
+                throw new IllegalArgumentException("ksn is already the largest");
+            }
+            int newDid = Ints.fromByteArray(Bytes.fromHexString(did));
+            newDid++;
+            String new_did = Bytes.toHexString(Bytes.fromInt(newDid, 4));
+            newKsn = Bytes.toHexString(ksnData[0]) + Bytes.toHexString(ksnData[1]) + Bytes.toHexString(ksnData[2])
+                    + Bytes.toHexString(ksnData[3]) + new_did + Bytes.toHexString(ksnData[8])
+                    + Bytes.toHexString(ksnData[9]) + Bytes.toHexString(ksnData[10]) + Bytes.toHexString(ksnData[11]);
+        } else {
+            throw new IllegalArgumentException("ksn length error");
+        }
+        return newKsn;
     }
 }

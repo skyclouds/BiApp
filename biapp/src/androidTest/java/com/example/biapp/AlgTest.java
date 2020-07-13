@@ -67,15 +67,24 @@ public class AlgTest {
         byte[] ck1 = Bytes.fromHexString("11111111111111111111111111111111");
         byte[] ksn1 = Bytes.fromHexString("FFFFFF910626A4E00000");
         byte[] expect1 = Bytes.fromHexString("E9758033708B76CACDE1744D4633E164");
-        byte[] ik1 = AlgUtil.tdesIK(ck1,ksn1);
-        PrintfUtil.d("TDES-IK" , Bytes.toHexString(ik1));
-        PrintfUtil.d("TDES-IKExpect" , Bytes.equals(ik1, expect1)+"");
+        byte[] ik1 = AlgUtil.tdesIK(ck1, ksn1);
+        PrintfUtil.d("TDES-IK", Bytes.toHexString(ik1));
+        PrintfUtil.d("TDES-IKExpect", Bytes.equals(ik1, expect1) + "");
 
         byte[] ck2 = Bytes.fromHexString("FEDCBA9876543210F1F1F1F1F1F1F1F1");
         byte[] ksn2 = Bytes.fromHexString("123456789012345612345678");
         byte[] expect2 = Bytes.fromHexString("1273671EA26AC29AFA4D1084127652A1");
         byte[] ik2 = AlgUtil.aesIK(ck2, ksn2);
-        PrintfUtil.d("AES-IK" , Bytes.toHexString(ik2));
-        PrintfUtil.d("AES-IKExpect" , Bytes.equals(ik2, expect2)+"");
+        PrintfUtil.d("AES-IK", Bytes.toHexString(ik2));
+        PrintfUtil.d("AES-IKExpect", Bytes.equals(ik2, expect2) + "");
     }
+
+    @Test
+    public void ksnAddTest() {
+        String newKsn1 = AlgUtil.ksnAdd1("12345678901234567890");
+        PrintfUtil.d("newKsn1", newKsn1);
+        String newKsn2 = AlgUtil.ksnAdd1("123456789012345678901234");
+        PrintfUtil.d("newKsn2", newKsn2);
+    }
+
 }

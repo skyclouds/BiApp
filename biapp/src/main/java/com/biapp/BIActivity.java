@@ -6,7 +6,7 @@ import android.view.WindowManager;
 
 import androidx.fragment.app.FragmentActivity;
 
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.PrintfUtil;
 import com.f2prateek.rx.preferences2.BuildConfig;
 
 import org.jetbrains.annotations.NotNull;

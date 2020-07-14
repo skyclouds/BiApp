@@ -2,9 +2,9 @@ package com.example.biapp;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.biapp.utils.GsonUtil;
-import com.biapp.utils.PrintfUtil;
-import com.biapp.utils.TLVUtil;
+import com.biapp.util.GsonUtil;
+import com.biapp.util.PrintfUtil;
+import com.biapp.util.TLVUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

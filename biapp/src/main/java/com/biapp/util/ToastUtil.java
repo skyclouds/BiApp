@@ -1,4 +1,4 @@
-package com.biapp.utils;
+package com.biapp.util;
 
 import android.content.Context;
 import android.view.Gravity;

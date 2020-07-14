@@ -5,8 +5,8 @@ import android.widget.TextView;
 
 import com.biapp.BIActivity;
 import com.biapp.BIApp;
-import com.biapp.utils.ApkInfoUtil;
-import com.biapp.utils.ToastUtil;
+import com.biapp.util.ApkInfoUtil;
+import com.biapp.util.ToastUtil;
 
 /**
  * @author yun

@@ -1,8 +1,8 @@
 package com.biapp.key;
 
 
-import com.biapp.utils.AlgUtil;
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.AlgUtil;
+import com.biapp.util.PrintfUtil;
 
 import java.util.Arrays;
 

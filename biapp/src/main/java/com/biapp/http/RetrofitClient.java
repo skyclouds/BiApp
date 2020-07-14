@@ -6,9 +6,9 @@ import android.util.Base64;
 import com.biapp.BIApp;
 import com.biapp.BIAppException;
 import com.biapp.lib.R;
-import com.biapp.utils.FormatUtil;
-import com.biapp.utils.GsonUtil;
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.FormatUtil;
+import com.biapp.util.GsonUtil;
+import com.biapp.util.PrintfUtil;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;

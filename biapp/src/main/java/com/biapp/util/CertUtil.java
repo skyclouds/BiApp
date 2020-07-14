@@ -1,6 +1,6 @@
-package com.biapp.utils;
+package com.biapp.util;
 
-import com.biapp.utils.TLVUtil.TLV;
+import com.biapp.util.TLVUtil.TLV;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

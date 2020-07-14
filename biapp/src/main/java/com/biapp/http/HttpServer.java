@@ -3,8 +3,8 @@ package com.biapp.http;
 
 import com.biapp.BIApp;
 import com.biapp.lib.R;
-import com.biapp.utils.GsonUtil;
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.GsonUtil;
+import com.biapp.util.PrintfUtil;
 import com.koushikdutta.async.AsyncNetworkSocket;
 import com.koushikdutta.async.http.AsyncHttpPost;
 import com.koushikdutta.async.http.Multimap;

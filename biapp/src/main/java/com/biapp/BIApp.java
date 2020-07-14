@@ -6,7 +6,7 @@ import android.os.StrictMode;
 
 import com.biapp.messenger.RxBusDefaults;
 import com.biapp.room.AppDatabase;
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.PrintfUtil;
 import com.f2prateek.rx.preferences2.BuildConfig;
 
 import io.reactivex.plugins.RxJavaPlugins;

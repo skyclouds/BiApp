@@ -1,4 +1,4 @@
-package com.biapp.utils;
+package com.biapp.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

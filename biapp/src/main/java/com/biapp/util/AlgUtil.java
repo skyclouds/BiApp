@@ -1,4 +1,4 @@
-package com.biapp.utils;
+package com.biapp.util;
 
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -10,6 +10,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
@@ -194,6 +196,24 @@ public class AlgUtil {
         public String toString() {
             return this.name;
         }
+    }
+
+    /**
+     * 生成RSA公私钥对
+     *
+     * @param keyLength
+     * @return
+     */
+    public static KeyPair generateRSAKeyPair(int keyLength) {
+        KeyPair keyPair = null;
+        try {
+            KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+            keyPairGen.initialize(keyLength);
+            keyPair = keyPairGen.generateKeyPair();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return keyPair;
     }
 
     /**

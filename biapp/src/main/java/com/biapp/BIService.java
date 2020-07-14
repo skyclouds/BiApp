@@ -3,7 +3,7 @@ package com.biapp;
 import android.app.Service;
 import android.content.Intent;
 
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.PrintfUtil;
 
 /**
  * BIService

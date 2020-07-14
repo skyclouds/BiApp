@@ -5,10 +5,10 @@ import android.content.Context;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.biapp.utils.AlgUtil;
-import com.biapp.utils.CertUtil;
-import com.biapp.utils.FileUtil;
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.AlgUtil;
+import com.biapp.util.CertUtil;
+import com.biapp.util.FileUtil;
+import com.biapp.util.PrintfUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,4 +1,4 @@
-package com.biapp.utils;
+package com.biapp.util;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -693,5 +693,16 @@ public class ApkInfoUtil {
             }
         }
         return false;
+    }
+
+    /**
+     * 根据资源名字找ID
+     * @param context
+     * @param resType string/drawable/color/style/attr/dimen/string-array
+     * @param resName
+     * @return
+     */
+    public static int getResIdByName(Context context,String resType,String resName){
+        return context.getResources().getIdentifier(resName, resType, context.getPackageName());
     }
 }

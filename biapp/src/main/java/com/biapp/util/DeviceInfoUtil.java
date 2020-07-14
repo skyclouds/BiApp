@@ -1,4 +1,4 @@
-package com.biapp.utils;
+package com.biapp.util;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -13,6 +13,9 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -494,4 +497,45 @@ public class DeviceInfoUtil {
         return ipAddress;
     }
 
+    /**
+     * 获得系统属性
+     *
+     * @param propertyName
+     * @param defaultValue
+     * @return
+     */
+    public static String getSystemProperty(String propertyName, String defaultValue) {
+        String result = null;
+        try {
+            Class spCls = Class.forName("android.os.SystemProperties");
+            Class[] typeArgs = new Class[2];
+            typeArgs[0] = String.class;
+            typeArgs[1] = String.class;
+            Class[] classes = null;
+            Constructor spcs = spCls.getConstructor(classes);
+            Object[] valueArgs = new Object[2];
+            valueArgs[0] = propertyName;
+            valueArgs[1] = defaultValue;
+            Object[] objects = null;
+            Object sp = spcs.newInstance(objects);
+            Method method = spCls.getMethod("get", typeArgs);
+            result = (String) method.invoke(sp, valueArgs);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            return defaultValue;
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+            return defaultValue;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return defaultValue;
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+            return defaultValue;
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+            return defaultValue;
+        }
+        return result;
+    }
 }

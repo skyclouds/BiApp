@@ -7,7 +7,7 @@ import com.biapp.key.KeyAlgorithm;
 import com.biapp.key.KeyUsage;
 import com.biapp.key.ModelOfUse;
 import com.biapp.key.TR31;
-import com.biapp.utils.PrintfUtil;
+import com.biapp.util.PrintfUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

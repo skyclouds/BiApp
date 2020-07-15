@@ -7,12 +7,15 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.biapp.util.AlgUtil;
 import com.biapp.util.CertUtil;
+import com.biapp.util.DateUtil;
 import com.biapp.util.FileUtil;
 import com.biapp.util.PrintfUtil;
+import com.biapp.util.TLVUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
@@ -99,4 +102,22 @@ public class CertTest {
 
     }
 
+    @Test
+    public void X509RSACertTest() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        CertUtil.X509RSACert cert = CertUtil.getX509RSACert(FileUtil.toByteArray(FileUtil.readAssetsFile(context,"BSWC_3_D.crt")));
+        PrintfUtil.d("Version", cert.getVersion() + "");
+        PrintfUtil.d("SerialNumber", cert.getSerialNumber());
+        PrintfUtil.d("SignAlgName", cert.getSignAlgName());
+        PrintfUtil.d("IssuerName", cert.getIssuerName());
+        PrintfUtil.d("StartTime", DateUtil.getDateString("yyyy-MM-dd", cert.getStartTime()));
+        PrintfUtil.d("EndTime", DateUtil.getDateString("yyyy-MM-dd", cert.getEndTime()));
+        PrintfUtil.d("SubjectName", cert.getSubjectName());
+        for(TLVUtil.TLV tlv : cert.getExtend()){
+            PrintfUtil.d("Extend", Bytes.toHexString(tlv.getValue()));
+        }
+        PrintfUtil.d("Signature", Bytes.toHexString(cert.getSignature()));
+        PrintfUtil.d("GROUP_ID", Bytes.toHexString(cert.getExtendValue(CertUtil.X509RSACert.ExtendTAG.GROUP_ID)));
+        PrintfUtil.d("GROUP_INSIDE_ID", Bytes.toHexString(cert.getExtendValue(CertUtil.X509RSACert.ExtendTAG.GROUP_INSIDE_ID)));
+    }
 }

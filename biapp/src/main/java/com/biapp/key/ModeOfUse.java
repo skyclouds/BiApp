@@ -7,7 +7,7 @@ package com.biapp.key;
  *
  * @author Yun
  */
-public interface ModelOfUse {
+public interface ModeOfUse {
     /**
      * Both Encrypt & Decrypt / Wrap &Unwrap. "KUM" : Key Use Mode.
      */

@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.biapp.key.Exportability;
 import com.biapp.key.KeyAlgorithm;
 import com.biapp.key.KeyUsage;
-import com.biapp.key.ModelOfUse;
+import com.biapp.key.ModeOfUse;
 import com.biapp.key.TR31;
 import com.biapp.util.PrintfUtil;
 
@@ -25,7 +25,7 @@ public class TR31Test {
         byte[] pack = tr31.setKey(Bytes.fromHexString(key))
                 .setKeyAlgorithm(KeyAlgorithm.TDEA)
                 .setKeyUsage(KeyUsage.SYMMETRIC_KEY_DATA_ENCRYPTION)
-                .setModeOfUse(ModelOfUse.DEC_OR_UNWRAP_ONLY)
+                .setModeOfUse(ModeOfUse.DEC_OR_UNWRAP_ONLY)
                 .setExportability(Exportability.NON_EXPORTABLE)
                 .pack(Bytes.fromHexString(tk));
         PrintfUtil.d("pack", Bytes.toHexString(pack));
@@ -40,7 +40,7 @@ public class TR31Test {
         byte[] pack = tr31.setKey(Bytes.fromHexString(key))
                 .setKeyAlgorithm(KeyAlgorithm.AES)
                 .setKeyUsage(KeyUsage.SYMMETRIC_KEY_DATA_ENCRYPTION)
-                .setModeOfUse(ModelOfUse.DEC_OR_UNWRAP_ONLY)
+                .setModeOfUse(ModeOfUse.DEC_OR_UNWRAP_ONLY)
                 .setExportability(Exportability.NON_EXPORTABLE)
                 .pack(Bytes.fromHexString(tk));
         PrintfUtil.d("pack", Bytes.toHexString(pack));

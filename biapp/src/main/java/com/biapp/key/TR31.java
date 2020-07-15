@@ -76,7 +76,7 @@ public class TR31 {
     private byte keyAlgorithm;
 
     /**
-     * @see ModelOfUse
+     * @see ModeOfUse
      * 1字节modeOfUse 默认0
      */
     private byte modeOfUse = 0x30;

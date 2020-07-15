@@ -117,7 +117,7 @@ public class CertTest {
             PrintfUtil.d("Extend", Bytes.toHexString(tlv.getValue()));
         }
         PrintfUtil.d("Signature", Bytes.toHexString(cert.getSignature()));
-        PrintfUtil.d("GROUP_ID", Bytes.toHexString(cert.getExtendValue(CertUtil.X509RSACert.ExtendTAG.GROUP_ID)));
-        PrintfUtil.d("GROUP_INSIDE_ID", Bytes.toHexString(cert.getExtendValue(CertUtil.X509RSACert.ExtendTAG.GROUP_INSIDE_ID)));
+        PrintfUtil.d("GroupId", Bytes.toHexString(cert.getExtendValue(CertUtil.X509RSACert.ExtendTAG.GROUP_ID)));
+        PrintfUtil.d("GroupInsideId", Bytes.toHexString(cert.getExtendValue(CertUtil.X509RSACert.ExtendTAG.GROUP_INSIDE_ID)));
     }
 }

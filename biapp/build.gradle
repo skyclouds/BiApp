@@ -58,6 +58,7 @@ dependencies {
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     //Gson
     implementation 'com.google.code.gson:gson:2.8.6'
     //RxPreferences
@@ -69,10 +70,14 @@ dependencies {
     //timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
     //ConstraintLayout
-    implementation 'com.android.support.constraint:constraint-layout:2.0.0-beta7'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.0-beta8'
+    //BindingCollectionAdapter
+    implementation 'me.tatarka.bindingcollectionadapter2:bindingcollectionadapter:4.0.0'
+    implementation 'me.tatarka.bindingcollectionadapter2:bindingcollectionadapter-recyclerview:4.0.0'
+    implementation 'me.tatarka.bindingcollectionadapter2:bindingcollectionadapter-viewpager2:4.0.0'
     //Parceler
-    implementation 'org.parceler:parceler-api:1.1.12'
-    annotationProcessor 'org.parceler:parceler:1.1.12'
+    implementation 'org.parceler:parceler-api:1.1.13'
+    annotationProcessor 'org.parceler:parceler:1.1.13'
     // Room
     implementation 'android.arch.persistence.room:runtime:1.1.1'
     annotationProcessor "android.arch.persistence.room:compiler:1.1.1"
@@ -86,7 +91,7 @@ dependencies {
     // AndroidAsync
     implementation 'com.koushikdutta.async:androidasync:3.0.9'
     //Retrofit
-    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
     //Xml

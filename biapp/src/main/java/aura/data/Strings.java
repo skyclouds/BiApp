@@ -876,4 +876,13 @@ public final class Strings {
     public static String cutTail(String data, int max) {
         return data.length() <= max ? data : data.substring(0, max);
     }
+
+    /**
+     * 是否为16进制字符串
+     * @param value
+     * @return
+     */
+    public static boolean isHexString(String value){
+        return value.matches("^[A-Fa-f0-9]+$");
+    }
 }

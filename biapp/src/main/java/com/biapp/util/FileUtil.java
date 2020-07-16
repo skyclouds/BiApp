@@ -172,11 +172,11 @@ public class FileUtil {
                 String line = null;
                 int lineNum = 0;
                 while ((line = reader.readLine()) != null) {
-                    lineNum++;
-                    buffer.append(line);
-                    if (lineNum > 1) {
+                    if (lineNum > 0) {
                         buffer.append(System.lineSeparator());
                     }
+                    buffer.append(line);
+                    lineNum++;
                 }
                 read = buffer.toString();
             }

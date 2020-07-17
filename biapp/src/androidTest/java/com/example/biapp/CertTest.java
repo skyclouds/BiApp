@@ -108,7 +108,7 @@ public class CertTest {
         CertUtil.X509RSACert cert = CertUtil.getX509RSACert(FileUtil.toByteArray(FileUtil.readAssetsFile(context,"BSWC_3_D.crt")));
         PrintfUtil.d("Version", cert.getVersion() + "");
         PrintfUtil.d("SerialNumber", cert.getSerialNumber());
-        PrintfUtil.d("SignAlgName", cert.getSignAlgName());
+        //PrintfUtil.d("SignAlgName", cert.getSignAlgName());
         PrintfUtil.d("IssuerName", cert.getIssuerName());
         PrintfUtil.d("StartTime", DateUtil.getDateString("yyyy-MM-dd", cert.getStartTime()));
         PrintfUtil.d("EndTime", DateUtil.getDateString("yyyy-MM-dd", cert.getEndTime()));

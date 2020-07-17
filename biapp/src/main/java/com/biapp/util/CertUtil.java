@@ -152,7 +152,7 @@ public class CertUtil {
 
 
         public X509RSACert(byte[] data){
-            this.data = data;
+            parse(data);
         }
 
         public byte[] getData() {
@@ -291,7 +291,7 @@ public class CertUtil {
                 this.data=data;
                 this.version=cert.getVersion();
                 this.serialNumber=cert.getSerialNumber().toString();
-                this.signAlgName=cert.getSigAlgName();
+                //this.signAlgName=cert.getSigAlgName();
                 this.issuerName="";
                 for(String value:cert.getIssuerDN().getName().split(",")){
                     if(value.startsWith("CN=")){

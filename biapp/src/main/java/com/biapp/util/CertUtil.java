@@ -500,6 +500,16 @@ public class CertUtil {
     }
 
     /**
+     * RSAPublicKey类对象解析成6进制数据
+     * @param publicKey
+     * @return
+     */
+    public static byte[] RSAPublicKey2Hex(RSAPublicKey publicKey) {
+        byte[] hex=Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16)),Bytes.fromHexString(publicKey.getPublicExponent().toString(16)));
+        return Bytes.concat(Bytes.fromInt(hex.length, 4, Bytes.ENDIAN.LITTLE_ENDIAN),hex);
+    }
+
+    /**
      * 将公钥16进制数据解析成RSAPublicKey类对象
      *
      * @param hex
@@ -534,6 +544,23 @@ public class CertUtil {
             e.printStackTrace();
         }
         return publicKey;
+    }
+
+    /**
+     * RSAPrivateCrtKey类对象解析成6进制数据
+     * @param privateKey
+     * @return
+     */
+    public static byte[] RSAPrivateCrtKey2Hex(RSAPrivateCrtKey privateKey) {
+        byte[] hex=Bytes.concat(Bytes.fromHexString(privateKey.getModulus().toString(16)),
+                Bytes.fromHexString(privateKey.getPublicExponent().toString(16)),
+                Bytes.fromHexString(privateKey.getPrivateExponent().toString(16)),
+                Bytes.fromHexString(privateKey.getPrimeP().toString(16)),
+                Bytes.fromHexString(privateKey.getPrimeQ().toString(16)),
+                Bytes.fromHexString(privateKey.getPrimeExponentP().toString(16)),
+                Bytes.fromHexString(privateKey.getPrimeExponentQ().toString(16)),
+                Bytes.fromHexString(privateKey.getCrtCoefficient().toString(16)));
+        return Bytes.concat(Bytes.fromInt(hex.length, 4, Bytes.ENDIAN.LITTLE_ENDIAN),hex);
     }
 
     /**

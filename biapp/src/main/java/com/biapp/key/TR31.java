@@ -361,16 +361,12 @@ public class TR31 {
         }
         // KeyBlockRandom
         int paddingLen = 0;
-        if (keyBlockRandom == null) {
-            if (keyBlockVersion == KeyBlockVersion.B) {
-                paddingLen = 8 - (2 + key.length) % 8;
-            } else if (keyBlockVersion == KeyBlockVersion.D) {
-                paddingLen = 16 - (2 + key.length) % 16;
-            }
-            keyBlockRandom = AlgUtil.getRandom(paddingLen);
-        } else {
-            paddingLen = keyBlockRandom.length;
+        if (keyBlockVersion == KeyBlockVersion.B) {
+            paddingLen = 8 - (2 + key.length) % 8;
+        } else if (keyBlockVersion == KeyBlockVersion.D) {
+            paddingLen = 16 - (2 + key.length) % 16;
         }
+        keyBlockRandom = AlgUtil.getRandom(paddingLen);
         PrintfUtil.d("PaddingLen", paddingLen + "");
         PrintfUtil.d("KeyBlockRandom", Bytes.toHexString(keyBlockRandom));
         keyBlock = Bytes.concat(keyLength, key, keyBlockRandom);

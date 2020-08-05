@@ -917,7 +917,7 @@ public class TR31 {
         } else {
             String[] values = map.get(Strings.decode(keyUsage));
             List<String> modeOfUses = Arrays.asList(values);
-            return modeOfUses.contains((char) modeOfUse + "");
+            return modeOfUses.contains(modeOfUse + "");
         }
     }
 }

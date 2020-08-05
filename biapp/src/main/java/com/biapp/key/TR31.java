@@ -5,6 +5,9 @@ import com.biapp.util.AlgUtil;
 import com.biapp.util.PrintfUtil;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import aura.data.Bytes;
 import aura.data.Strings;
@@ -284,6 +287,9 @@ public class TR31 {
 //        }
         keyHead = Bytes.concat(keyHead, new byte[]{modeOfUse});
         PrintfUtil.d("ModeOfUse", (char) modeOfUse + "");
+        if (!checkKeyUsageAndModeOfUse()) {
+            throw new IllegalArgumentException("keyUsage and  ModeOfUse not match");
+        }
         //VerNum
         if (verNum.length != 2) {
             PrintfUtil.e("TR31", "VerNum length error");
@@ -805,5 +811,113 @@ public class TR31 {
             throw new IllegalArgumentException("KBPK length error");
         }
         return encKey;
+    }
+
+    /**
+     * 校验密钥用途以及模式
+     * @return
+     */
+    private boolean checkKeyUsageAndModeOfUse() {
+        Map<String, String[]> map = new HashMap<>();
+        map.put("01",new String[]{ModeOfUse.ENC_OR_WRAP_ONLY+""});
+        map.put(KeyUsage.BDK, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.DUKPT_INIT_KEY, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.BASE_KEY_VARIANT_KEY, new String[]{ModeOfUse.CREATE_KEY_VARIANTS + ""});
+        map.put(KeyUsage.CVK, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.SYMMETRIC_KEY_DATA_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.ASYMMETRIC_KEY_DATA_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.DECIMALIZATION_TABLE_DATA_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.APPLICATION_CRYPTOGRAMS, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.MESSAGING_FOR_CONFIDENTIALITY, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.MESSAGING_FOR_INTEGRITY, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.DATA_AUTHENTICATION_CODE, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.DYNAMIC_NUMBERS, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.CARD_PERSONALIZATION, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.OTHER, new String[]{ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.IV, new String[]{ModeOfUse.NO_RESTRICTIONS + ""});
+        map.put(KeyUsage.KEY_ENC_OR_WRAP, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.TR31_PROTECTION_KEY, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.TR34_ASYMMETRIC_KEY, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.ASYMMETRIC_KEY_AGREE_WRAP, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + "",
+                ModeOfUse.DERIVE_KEYS + ""});
+        map.put(KeyUsage.ISO_16609_MAC_ALGORITHM_1, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_1, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_2, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_3, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_4, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.ISO_9797_1_1999_MAC_ALGORITHM_5, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.CMAC, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.HMAC, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.ISO_9797_1_2011_MAC_ALGORITHM_6, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.PIN_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.ASYMMETRIC_KEY_SIGNATURE, new String[]{ModeOfUse.SIGNATURE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.LOG_SIGNATURE, new String[]{ModeOfUse.SIGNATURE_ONLY + ""});
+        map.put(KeyUsage.CA, new String[]{ModeOfUse.SIGNATURE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.NONX9_24, new String[]{ModeOfUse.SIGNATURE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + "",
+                ModeOfUse.SIGN_AND_DEC + "",
+                ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.KPV, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.IBM_3624, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.VISA_PVV, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.X9_132_ALGORITHM_1, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.X9_132_ALGORITHM_2, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
+                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.VERIFY_ONLY + ""});
+        if (map.get(Strings.decode(keyUsage)) == null) {
+            throw new IllegalArgumentException("KeyUsage error");
+        } else {
+            String[] values = map.get(Strings.decode(keyUsage));
+            List<String> modeOfUses = Arrays.asList(values);
+            return modeOfUses.contains((char) modeOfUse + "");
+        }
     }
 }

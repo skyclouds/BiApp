@@ -15,26 +15,26 @@ public interface KeyBlockVersion {
      * TDEA Key Derivation Binding Method (see
      * section 5.3.2.1)
      */
-    byte A = 0x41;
+    byte A = 'A';
 
     /**
      * ‘B’ (0x42) – Key block protected using the
      * TDEA Key Derivation Binding Method (see
      * section 5.3.2.1)
      */
-    byte B = 0x42;
+    byte B = 'B';
 
     /**
      * ‘C’ (0x43) – Key block protected using the
      * TDEA Key Derivation Binding Method (see
      * section 5.3.2.1)
      */
-    byte C = 0x43;
+    byte C = 'C';
 
     /**
      * ‘D’ (0x44) - Key block protected using the AES
      * Key Derivation Binding Method (see section
      * 5.3.2.3)
      */
-    byte D = 0x44;
+    byte D = 'D';
 }

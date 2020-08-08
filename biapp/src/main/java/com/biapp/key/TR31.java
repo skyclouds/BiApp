@@ -123,10 +123,6 @@ public class TR31 {
 
     /**
      * TR-31包
-     * RP/LANDI:
-     * KeyHead数据包+OUT数据包(ASCII码表示)+MAC数据包(ASCII码表示)
-     * FSDK(TR31):
-     * DBH+KeyHead数据包+OUT数据包(ASCII码表示)+MAC数据包(ASCII码表示)
      */
     private byte[] tr31;
 
@@ -362,7 +358,7 @@ public class TR31 {
         }
         PrintfUtil.d("Key", Bytes.toHexString(key));
         if (key.length / 8 > Short.MAX_VALUE) {
-            throw new IllegalArgumentException("OptionalBlock Num over limit");
+            throw new IllegalArgumentException("Key size over limit");
         }
         short keyLen = (short) (key.length * 8);
         // KeyBlockRandom

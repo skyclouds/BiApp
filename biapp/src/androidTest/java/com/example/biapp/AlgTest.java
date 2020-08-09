@@ -50,7 +50,7 @@ public class AlgTest {
         RSAPrivateCrtKey rsaPrivateCrtKey = CertUtil.hex2RSAPrivateKey(privateKey);
         byte[] key = AlgUtil.decrypt(rsaPrivateCrtKey, AlgUtil.AsymmetricPadding.PKCS1Padding, Bytes.fromBase64String(deviceKey));
         PrintfUtil.d("key", new String(key));
-        PrintfUtil.d("kcv", Bytes.toHexString(AlgUtil.tdesKCV(new String(key).getBytes())));
+        PrintfUtil.d("kcv", Bytes.toHexString(AlgUtil.tdesLegacyKCV(new String(key).getBytes())));
         String responseCode = "00";
         String responseMsg = "success";
         String resAuthorCode = "deviceKey=" + deviceKey + "&responseCode=" + responseCode + "&responseMsg="

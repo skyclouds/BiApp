@@ -498,10 +498,21 @@ public class AlgUtil {
      * @param key
      * @return
      */
-    public static byte[] tdesKCV(byte[] key) {
+    public static byte[] tdesLegacyKCV(byte[] key) {
         byte[] zero = new byte[8];
         Arrays.fill(zero, (byte) 0x00);
         return encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.CBC, SymmetryPadding.ZeroPadding, key, zero, zero);
+    }
+
+
+    /**
+     * @param key
+     * @return
+     */
+    public static byte[] aesLegacyKCV(byte[] key) {
+        byte[] zero = new byte[16];
+        Arrays.fill(zero, (byte) 0x00);
+        return encrypt(SymmetryAlgorithm.AES, AlgorithmModel.CBC, SymmetryPadding.ZeroPadding, key, zero, zero);
     }
 
     /**
@@ -510,11 +521,25 @@ public class AlgUtil {
      * @param key
      * @return
      */
-    public static byte[] aesKCV(byte[] key) {
+    public static byte[] tdesCMACKCV(byte[] key) {
+        byte[] zero = new byte[8];
+        Arrays.fill(zero, (byte) 0x00);
+        return tdesCMAC(key, zero);
+    }
+
+    /**
+     * 计算KCV
+     *
+     * @param key
+     * @return
+     */
+    public static byte[] aesCMACKCV(byte[] key) {
         byte[] zero = new byte[16];
         Arrays.fill(zero, (byte) 0x00);
         return aesCMAC(key, zero);
     }
+
+
 
     /**
      * TDES MCAC

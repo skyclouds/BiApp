@@ -1,6 +1,5 @@
 package com.biapp.key;
 
-
 import com.biapp.util.AlgUtil;
 import com.biapp.util.FormatUtil;
 import com.biapp.util.PrintfUtil;
@@ -30,15 +29,14 @@ public class TR31 {
      */
     public final static int KEY_BLOCK_VERSION_D_MAC_LENGTH = 32;
 
-
     /**
-     * KeyHead数据包：KeyBlockVersion（1A）+TR-31包长度（4N）+KeyUsage（2AN）+KeyAlgorithm（1A）+ModeOfUse（1A）+VerNum（2AN）+Exportability（1A）+Optional Block Num（2N）+Reserved （2AN）+ Optional Block [n]
+     * KeyHead数据包：KeyBlockVersion（1A）+TR-31包长度（4N）+KeyUsage（2AN）+KeyAlgorithm（1A）+ModeOfUse（1A）+VerNum（2AN）+Exportability（1A）+Optional
+     * Block Num（2N）+Reserved （2AN）+ Optional Block [n]
      */
     private byte[] keyHead;
 
     /**
-     * @see KeyBlockVersion
-     * KeyBlockVersion
+     * @see KeyBlockVersion KeyBlockVersion
      */
     private byte keyBlockVersion = KeyBlockVersion.B;
 
@@ -46,7 +44,6 @@ public class TR31 {
      * TR-31包长度(4N)
      */
     private int tr31Length = 0;
-
 
     /**
      * 密钥用途（2AN）
@@ -116,8 +113,7 @@ public class TR31 {
     private byte[] out;
 
     /**
-     * MAC数据包：用MACKEY对MAC数据进行的TEDS-CMAC/AES-CMAC
-     * MAC数据：KeyHead+KEYBLOCK
+     * MAC数据包：用MACKEY对MAC数据进行的TEDS-CMAC/AES-CMAC MAC数据：KeyHead+KEYBLOCK
      */
     private byte[] mac;
 
@@ -125,7 +121,6 @@ public class TR31 {
      * TR-31包
      */
     private byte[] tr31;
-
 
     public TR31() {
 
@@ -242,28 +237,41 @@ public class TR31 {
      * @return
      */
     public byte[] pack(byte[] bpk) {
-        //检查BPK
+        // 检查BPK
         if (Bytes.isNullOrEmpty(bpk)) {
             throw new IllegalArgumentException("BPK not set");
         }
         PrintfUtil.d("BPK", Bytes.toHexString(bpk));
-        //设置KeyHead
+        // Key
+        if (Bytes.isNullOrEmpty(key)) {
+            throw new IllegalArgumentException("Key not set");
+        }
+        PrintfUtil.d("Key", Bytes.toHexString(key));
+        // 设置KP
+        if (keyBlockVersion == KeyBlockVersion.B) {
+            optionalBlocks.put(OptionalBlockID.KP,
+                    new OptionalBlock(KCVAlgorithm.LEGACY + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(bpk), 0, 3))));
+        } else if (keyBlockVersion == KeyBlockVersion.D) {
+            optionalBlocks.put(OptionalBlockID.KP,
+                    new OptionalBlock(KCVAlgorithm.CMAC + Bytes.toHexString(Bytes.subBytes(AlgUtil.aesCMACKCV(bpk), 0, 5))));
+        }
+        // 设置KeyHead
         setKeyHead();
-        //设置KeyBlock
+        // 设置KeyBlock
         setKeyBlock();
-        //计算MAC
+        // 计算MAC
         caclMAC(bpk);
-        //计算OUT
+        // 计算OUT
         caclOUT(bpk);
-        //释放
+        // 释放
         Arrays.fill(bpk, (byte) 0x00);
-        //转ASCII
+        // 转ASCII
         byte[] out_ascii = Strings.encode(Bytes.toHexString(out));
         PrintfUtil.d("Out-ASCII", Bytes.toHexString(out_ascii));
         byte[] mac_ascii = Strings.encode(Bytes.toHexString(mac));
         PrintfUtil.d("Mac-ASCII", Bytes.toHexString(mac_ascii));
         tr31 = Bytes.concat(keyHead, out_ascii, mac_ascii);
-        PrintfUtil.d("TR-31", Bytes.toHexString(tr31));
+        PrintfUtil.d("TR-31", new String(tr31));
         return tr31;
     }
 
@@ -271,16 +279,16 @@ public class TR31 {
      * 设置KeyHead
      */
     private void setKeyHead() {
-        //暂不支持A、C KeyBlockVersion
+        // 暂不支持A、C KeyBlockVersion
         if (!(keyBlockVersion == KeyBlockVersion.B || keyBlockVersion == KeyBlockVersion.D)) {
             throw new IllegalArgumentException("Only Support KeyBlockVersion B/D");
         }
         keyHead = new byte[]{keyBlockVersion};
         PrintfUtil.d("KeyBlockVersion", (char) keyBlockVersion + "");
-        //TR31包长度
+        // TR31包长度
         byte[] tr31LenData = FormatUtil.addHead('0', 4, tr31Length + "").getBytes();
         keyHead = Bytes.concat(keyHead, tr31LenData);
-        //KeyUsage
+        // KeyUsage
         if (Strings.isNullOrEmpty(keyUsage)) {
             throw new IllegalArgumentException("KeyUsage not set");
         }
@@ -289,13 +297,21 @@ public class TR31 {
         }
         keyHead = Bytes.concat(keyHead, keyUsage.getBytes());
         PrintfUtil.d("KeyUsage", keyUsage);
-        //keyAlgorithm
+        // keyAlgorithm
         if (keyAlgorithm == 0x00) {
             throw new IllegalArgumentException("KeyAlgorithm not set");
         }
         keyHead = Bytes.concat(keyHead, new byte[]{keyAlgorithm});
         PrintfUtil.d("KeyAlgorithm", (char) keyAlgorithm + "");
-        //ModeOfUse
+        // 设置KC域
+        if (keyAlgorithm == KeyAlgorithm.TDEA) {
+            optionalBlocks.put(OptionalBlockID.KC,
+                    new OptionalBlock(KCVAlgorithm.LEGACY + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(key), 0, 3))));
+        } else if (keyAlgorithm == KeyAlgorithm.AES) {
+            optionalBlocks.put(OptionalBlockID.KC,
+                    new OptionalBlock(KCVAlgorithm.CMAC + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(key), 0, 3))));
+        }
+        // ModeOfUse
         if (modeOfUse == 0x00) {
             throw new IllegalArgumentException("ModeOfUse not set");
         }
@@ -304,7 +320,7 @@ public class TR31 {
         if (!checkKeyUsageAndModeOfUse()) {
             throw new IllegalArgumentException("keyUsage and  ModeOfUse not match");
         }
-        //VerNum
+        // VerNum
         if (Strings.isNullOrEmpty(verNum)) {
             throw new IllegalArgumentException("VerNum not set");
         }
@@ -313,7 +329,7 @@ public class TR31 {
         }
         keyHead = Bytes.concat(keyHead, verNum.getBytes());
         PrintfUtil.d("VerNum", verNum + "");
-        //Exportability
+        // Exportability
         if (exportability == 0x00) {
             throw new IllegalArgumentException("Exportability not set");
         }
@@ -326,37 +342,39 @@ public class TR31 {
         short optionalNum = (short) optionalBlocks.size();
         PrintfUtil.d("OptionalNum", optionalNum + "");
         keyHead = Bytes.concat(keyHead, FormatUtil.addHead('0', 2, optionalNum + "").getBytes());
-        //预留域
+        // 预留域
         PrintfUtil.d("Reserved", reserved);
         keyHead = Bytes.concat(keyHead, reserved.getBytes());
-        //可选域
+        // 可选域
         for (Map.Entry<String, OptionalBlock> entry : optionalBlocks.entrySet()) {
             if (entry.getKey().equals(OptionalBlockID.KS)) {
-                if (!((keyAlgorithm == KeyAlgorithm.TDEA && entry.getValue().getData().length() == 20) ||
-                        (keyAlgorithm == KeyAlgorithm.AES && entry.getValue().getData().length() == 24))) {
+                if (!((keyAlgorithm == KeyAlgorithm.TDEA && entry.getValue().getData().length() == 20)
+                        || (keyAlgorithm == KeyAlgorithm.AES && entry.getValue().getData().length() == 24))) {
                     throw new IllegalArgumentException("KSN length not match KeyAlgorithm");
                 } else {
                     PrintfUtil.d("KSN", entry.getValue().getData());
-                    keyHead = Bytes.concat(keyHead, entry.getKey().getBytes(),
-                            entry.getValue().getLength().getBytes(),
+                    keyHead = Bytes.concat(keyHead, entry.getKey().getBytes(), entry.getValue().getLength().getBytes(),
                             entry.getValue().getData().getBytes());
                 }
+            } else if (entry.getKey().equals(OptionalBlockID.KP)) {
+                PrintfUtil.d("KBPK KCV", entry.getValue().getData().substring(2));
+                keyHead = Bytes.concat(keyHead, entry.getKey().getBytes(), entry.getValue().getLength().getBytes(),
+                        entry.getValue().getData().getBytes());
+            } else if (entry.getKey().equals(OptionalBlockID.KC)) {
+                PrintfUtil.d("KCV", entry.getValue().getData().substring(2));
+                keyHead = Bytes.concat(keyHead, entry.getKey().getBytes(), entry.getValue().getLength().getBytes(),
+                        entry.getValue().getData().getBytes());
             } else {
                 throw new IllegalArgumentException("UnSupport OptionalBlockID " + entry.getKey());
             }
         }
-        PrintfUtil.d("KeyHead", Bytes.toHexString(keyHead));
+        PrintfUtil.d("KeyHead", new String(keyHead));
     }
 
     /**
      * 设置KeyBlock
      */
     private void setKeyBlock() {
-        //Key
-        if (Bytes.isNullOrEmpty(key)) {
-            throw new IllegalArgumentException("Key not set");
-        }
-        PrintfUtil.d("Key", Bytes.toHexString(key));
         if (key.length / 8 > Short.MAX_VALUE) {
             throw new IllegalArgumentException("Key size over limit");
         }
@@ -400,9 +418,9 @@ public class TR31 {
             keyHead[4] = tr31LenData[3];
             mac = AlgUtil.aesCMAC(macKey, Bytes.concat(keyHead, keyBlock));
         }
-        PrintfUtil.d("KeyHead", Bytes.toHexString(keyHead));
+        PrintfUtil.d("KeyHead", new String(keyHead));
         PrintfUtil.d("Mac", Bytes.toHexString(mac));
-        //释放
+        // 释放
         Arrays.fill(macKey, (byte) 0x00);
     }
 
@@ -415,14 +433,16 @@ public class TR31 {
         byte[] encKey = null;
         if (keyBlockVersion == KeyBlockVersion.B) {
             encKey = desDeriveEncKey(bpk);
-            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.AlgorithmModel.CBC, AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, keyBlock);
+            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.AlgorithmModel.CBC,
+                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, keyBlock);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             encKey = aesDeriveEncKey(bpk);
-            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.AlgorithmModel.CBC, AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, keyBlock);
+            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.AlgorithmModel.CBC,
+                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, keyBlock);
         }
         PrintfUtil.d("EncKey", Bytes.toHexString(encKey));
         PrintfUtil.d("Out", Bytes.toHexString(out));
-        //释放
+        // 释放
         Arrays.fill(encKey, (byte) 0x00);
     }
 
@@ -432,46 +452,46 @@ public class TR31 {
      */
     public void unpack(byte[] tr31, byte[] bpk) {
         this.tr31 = tr31;
-        PrintfUtil.d("TR-31", Bytes.toHexString(tr31));
-        //检查TK
+        PrintfUtil.d("TR-31", new String(tr31));
+        // 检查TK
         if (Bytes.isNullOrEmpty(bpk)) {
             PrintfUtil.e("TR31", "BPK not set");
             throw new IllegalArgumentException("BPK not set");
         }
         PrintfUtil.d("BPK", Bytes.toHexString(bpk));
         int index = 0;
-        //KeyBlockVersion
+        // KeyBlockVersion
         this.keyBlockVersion = tr31[index++];
         PrintfUtil.d("KeyBlockVersion", (char) keyBlockVersion + "");
         if (!(keyBlockVersion == KeyBlockVersion.B || keyBlockVersion == KeyBlockVersion.D)) {
             throw new IllegalArgumentException("Only Support KeyBlockVersion B/D");
         }
-        //Tr31Len
+        // Tr31Len
         this.tr31Length = Integer.parseInt(Strings.decode(Bytes.subBytes(tr31, index, 4)));
         PrintfUtil.d("Tr31Length", tr31Length + "");
         index += 4;
         if (tr31Length != tr31.length) {
             throw new IllegalArgumentException("Tr31 length error");
         }
-        //KeyUsage
+        // KeyUsage
         keyUsage = Strings.decode(new byte[]{tr31[index++], tr31[index++]});
         PrintfUtil.d("KeyUsage", keyUsage);
-        //keyAlgorithm
+        // keyAlgorithm
         keyAlgorithm = tr31[index++];
         PrintfUtil.d("KeyAlgorithm", (char) keyAlgorithm + "");
-        //modeOfUse
+        // modeOfUse
         modeOfUse = tr31[index++];
         PrintfUtil.d("ModeOfUse", (char) modeOfUse + "");
-        //verNum
+        // verNum
         verNum = Strings.decode(new byte[]{tr31[index++], tr31[index++]});
         PrintfUtil.d("VerNum", verNum);
-        //Exportability
+        // Exportability
         exportability = tr31[index++];
         PrintfUtil.d("Exportability", (char) exportability + "");
-        //自定义域数量
+        // 自定义域数量
         int optionalNum = Integer.parseInt(Strings.decode(new byte[]{tr31[index++], tr31[index++]}));
         PrintfUtil.d("OptionalNum", optionalNum + "");
-        //预留域 0x30 0x30
+        // 预留域 0x30 0x30
         reserved = Strings.decode(new byte[]{tr31[index++], tr31[index++]});
         PrintfUtil.d("Reserved", reserved);
         for (int i = 0; i < optionalNum; i++) {
@@ -479,18 +499,22 @@ public class TR31 {
             int optionalBlockLength = Integer.parseInt(Strings.decode(new byte[]{tr31[index++], tr31[index++]}), 16);
             String optionalBlockData = Strings.decode(Bytes.subBytes(tr31, index, optionalBlockLength - 4));
             index += optionalBlockLength - 4;
-            PrintfUtil.d("OptionalBlockID" , optionalBlockID);
+            PrintfUtil.d("OptionalBlockID", optionalBlockID);
             OptionalBlock optionalBlock = new OptionalBlock(optionalBlockData);
             addOptionalBlock(optionalBlockID, optionalBlock);
             if (optionalBlockID.equals(OptionalBlockID.KS)) {
                 PrintfUtil.d("KSN", optionalBlockData);
-            }else {
-                PrintfUtil.d("OptionalBlockData" , optionalBlockData);
+            } else if (optionalBlockID.equals(OptionalBlockID.KP)) {
+                PrintfUtil.d("KBPK KCV", optionalBlockData.substring(2));
+            } else if (optionalBlockID.equals(OptionalBlockID.KC)) {
+                PrintfUtil.d("KCV", optionalBlockData.substring(2));
+            } else {
+                PrintfUtil.d("OptionalBlockData", optionalBlockData);
             }
         }
-        //Mac长度
+        // Mac长度
         int macLen = 0;
-        //KeyHead
+        // KeyHead
         keyHead = Bytes.subBytes(tr31, 0, index);
         PrintfUtil.d("KeyHead", Bytes.toHexString(keyHead));
         if (keyBlockVersion == KeyBlockVersion.B) {
@@ -498,30 +522,32 @@ public class TR31 {
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             macLen = KEY_BLOCK_VERSION_D_MAC_LENGTH;
         }
-        //Out
+        // Out
         byte[] out_ascii = Bytes.subBytes(tr31, index, tr31.length - index - macLen);
         PrintfUtil.d("Out-ASCII", Bytes.toHexString(out_ascii));
         out = Bytes.fromHexString(Strings.decode(out_ascii));
         PrintfUtil.d("Out", Bytes.toHexString(out));
-        //Mac
+        // Mac
         byte[] mac_ascii = Bytes.subBytes(tr31, tr31.length - macLen, macLen);
         PrintfUtil.d("Mac-ASCII", Bytes.toHexString(mac_ascii));
         mac = Bytes.fromHexString(Strings.decode(mac_ascii));
         PrintfUtil.d("Mac", Bytes.toHexString(mac));
-        //KeyBolck
-        byte[] encKey=null;
+        // KeyBolck
+        byte[] encKey = null;
         if (keyBlockVersion == KeyBlockVersion.B) {
             encKey = desDeriveEncKey(bpk);
-            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.AlgorithmModel.CBC, AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, out);
+            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.AlgorithmModel.CBC,
+                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, out);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             encKey = aesDeriveEncKey(bpk);
-            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.AlgorithmModel.CBC, AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, out);
+            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.AlgorithmModel.CBC,
+                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, out);
         }
         PrintfUtil.d("EncKey", Bytes.toHexString(encKey));
         PrintfUtil.d("KeyBlock", Bytes.toHexString(keyBlock));
-        //释放
+        // 释放
         Arrays.fill(encKey, (byte) 0x00);
-        //Key
+        // Key
         int keyLen = Bytes.toInt(new byte[]{keyBlock[0], keyBlock[1]}) / 8;
         PrintfUtil.d("KeyLen", keyLen + "");
         key = Bytes.subBytes(keyBlock, 2, keyLen);
@@ -543,20 +569,20 @@ public class TR31 {
         keyBlock = Bytes.subBytes(keyBlock, 0, 2 + keyLen + paddingLen);
         PrintfUtil.d("KeyBlock", Bytes.toHexString(keyBlock));
         byte[] checkMac = null;
-        //校验MAC
-        byte[] macKey=null;
+        // 校验MAC
+        byte[] macKey = null;
         if (keyBlockVersion == KeyBlockVersion.B) {
             macKey = desDeriveMacKey(bpk);
             checkMac = AlgUtil.tdesCMAC(macKey, Bytes.concat(keyHead, keyBlock));
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             macKey = aesDeriveMacKey(bpk);
             checkMac = AlgUtil.aesCMAC(macKey, Bytes.concat(keyHead, keyBlock));
-            //释放
+            // 释放
             Arrays.fill(macKey, (byte) 0x00);
         }
         PrintfUtil.d("MacKey", Bytes.toHexString(macKey));
         PrintfUtil.d("CheckMac", Bytes.toHexString(checkMac));
-        //释放
+        // 释放
         Arrays.fill(macKey, (byte) 0x00);
         if (!Bytes.equals(checkMac, mac)) {
             PrintfUtil.e("TR31", "Check Mac error");
@@ -681,18 +707,14 @@ public class TR31 {
         map.put(KeyUsage.BDK, new String[]{ModeOfUse.DERIVE_KEYS + ""});
         map.put(KeyUsage.DUKPT_INIT_KEY, new String[]{ModeOfUse.DERIVE_KEYS + ""});
         map.put(KeyUsage.BASE_KEY_VARIANT_KEY, new String[]{ModeOfUse.CREATE_KEY_VARIANTS + ""});
-        map.put(KeyUsage.CVK, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
+        map.put(KeyUsage.CVK, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "", ModeOfUse.GENERATE_ONLY + "",
                 ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.SYMMETRIC_KEY_DATA_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + ""});
         map.put(KeyUsage.ASYMMETRIC_KEY_DATA_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + ""});
         map.put(KeyUsage.DECIMALIZATION_TABLE_DATA_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + ""});
         map.put(KeyUsage.APPLICATION_CRYPTOGRAMS, new String[]{ModeOfUse.DERIVE_KEYS + ""});
         map.put(KeyUsage.MESSAGING_FOR_CONFIDENTIALITY, new String[]{ModeOfUse.DERIVE_KEYS + ""});
         map.put(KeyUsage.MESSAGING_FOR_INTEGRITY, new String[]{ModeOfUse.DERIVE_KEYS + ""});
@@ -702,74 +724,51 @@ public class TR31 {
         map.put(KeyUsage.OTHER, new String[]{ModeOfUse.DERIVE_KEYS + ""});
         map.put(KeyUsage.IV, new String[]{ModeOfUse.NO_RESTRICTIONS + ""});
         map.put(KeyUsage.KEY_ENC_OR_WRAP, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + ""});
         map.put(KeyUsage.TR31_PROTECTION_KEY, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + ""});
         map.put(KeyUsage.TR34_ASYMMETRIC_KEY, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + ""});
         map.put(KeyUsage.ASYMMETRIC_KEY_AGREE_WRAP, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + "",
-                ModeOfUse.DERIVE_KEYS + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + "", ModeOfUse.DERIVE_KEYS + ""});
         map.put(KeyUsage.ISO_16609_MAC_ALGORITHM_1, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_1, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_2, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_3, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.ISO_9797_1_MAC_Algorithm_4, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.ISO_9797_1_1999_MAC_ALGORITHM_5, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.CMAC, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "", ModeOfUse.GENERATE_ONLY + "",
                 ModeOfUse.VERIFY_ONLY + ""});
-        map.put(KeyUsage.CMAC, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
-        map.put(KeyUsage.HMAC, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
+        map.put(KeyUsage.HMAC, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "", ModeOfUse.GENERATE_ONLY + "",
                 ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.ISO_9797_1_2011_MAC_ALGORITHM_6, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.PIN_ENCRYPTION, new String[]{ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
-        map.put(KeyUsage.ASYMMETRIC_KEY_SIGNATURE, new String[]{ModeOfUse.SIGNATURE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.DEC_OR_UNWRAP_ONLY + "", ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.ASYMMETRIC_KEY_SIGNATURE,
+                new String[]{ModeOfUse.SIGNATURE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.LOG_SIGNATURE, new String[]{ModeOfUse.SIGNATURE_ONLY + ""});
-        map.put(KeyUsage.CA, new String[]{ModeOfUse.SIGNATURE_ONLY + "",
+        map.put(KeyUsage.CA, new String[]{ModeOfUse.SIGNATURE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
+        map.put(KeyUsage.NONX9_24,
+                new String[]{ModeOfUse.SIGNATURE_ONLY + "", ModeOfUse.VERIFY_ONLY + "", ModeOfUse.SIGN_AND_DEC + "",
+                        ModeOfUse.ENC_DEC_WRAP_UNWRAP + "", ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
+                        ModeOfUse.ENC_OR_WRAP_ONLY + ""});
+        map.put(KeyUsage.KPV, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "", ModeOfUse.GENERATE_ONLY + "",
                 ModeOfUse.VERIFY_ONLY + ""});
-        map.put(KeyUsage.NONX9_24, new String[]{ModeOfUse.SIGNATURE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + "",
-                ModeOfUse.SIGN_AND_DEC + "",
-                ModeOfUse.ENC_DEC_WRAP_UNWRAP + "",
-                ModeOfUse.DEC_OR_UNWRAP_ONLY + "",
-                ModeOfUse.ENC_OR_WRAP_ONLY + ""});
-        map.put(KeyUsage.KPV, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
+        map.put(KeyUsage.IBM_3624, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "", ModeOfUse.GENERATE_ONLY + "",
                 ModeOfUse.VERIFY_ONLY + ""});
-        map.put(KeyUsage.IBM_3624, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
-        map.put(KeyUsage.VISA_PVV, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
+        map.put(KeyUsage.VISA_PVV, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "", ModeOfUse.GENERATE_ONLY + "",
                 ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.X9_132_ALGORITHM_1, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         map.put(KeyUsage.X9_132_ALGORITHM_2, new String[]{ModeOfUse.GENERATE_AND_VERIFY + "",
-                ModeOfUse.GENERATE_ONLY + "",
-                ModeOfUse.VERIFY_ONLY + ""});
+                ModeOfUse.GENERATE_ONLY + "", ModeOfUse.VERIFY_ONLY + ""});
         if (map.get(keyUsage) == null) {
             throw new IllegalArgumentException("KeyUsage error");
         } else {

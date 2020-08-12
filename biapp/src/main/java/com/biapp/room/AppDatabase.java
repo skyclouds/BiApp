@@ -9,6 +9,8 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import com.biapp.lib.BuildConfig;
+
 
 /**
  * @author Yun

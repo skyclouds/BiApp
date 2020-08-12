@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.os.StrictMode;
 
+import com.biapp.lib.BuildConfig;
 import com.biapp.messenger.RxBusDefaults;
 import com.biapp.room.AppDatabase;
 import com.biapp.util.PrintfUtil;

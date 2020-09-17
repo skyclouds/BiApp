@@ -705,4 +705,39 @@ public class ApkInfoUtil {
     public static int getResIdByName(Context context,String resType,String resName){
         return context.getResources().getIdentifier(resName, resType, context.getPackageName());
     }
+
+    /**
+     * 是否系统应用
+     *
+     * @param context
+     * @param pkgName
+     * @return
+     */
+    public static boolean isSystemApp(Context context, String pkgName) {
+        boolean isSystemApp = false;
+        try {
+            PackageManager packageManager = context.getPackageManager();
+            PackageInfo packageInfo = packageManager.getPackageInfo(pkgName, 0);
+            // 是系统中已安装的应用
+            if (packageInfo != null) {
+                boolean isSysApp = (packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 1;
+                boolean isSysUpd = (packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 1;
+                isSystemApp = isSysApp || isSysUpd;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return isSystemApp;
+    }
+
+    /**
+     * 通过Uid获取包名
+     *
+     * @param context
+     * @param uid
+     * @return
+     */
+    public static String getPackNameForUid(Context context, int uid) {
+        return context.getPackageManager().getNameForUid(uid);
+    }
 }

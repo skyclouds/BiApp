@@ -505,9 +505,44 @@ public class TR31 {
             if (optionalBlockID.equals(OptionalBlockID.KS)) {
                 PrintfUtil.d("KSN", optionalBlockData);
             } else if (optionalBlockID.equals(OptionalBlockID.KP)) {
+                if (optionalBlockData.substring(0, 2).equals("00")) {
+                    PrintfUtil.d("KCV-algorithm", "Legacy KCV algorithm");
+                } else if (optionalBlockData.substring(0, 2).equals("00")) {
+                    PrintfUtil.d("KCV-algorithm", "CMAC based KCV");
+                }
                 PrintfUtil.d("KBPK KCV", optionalBlockData.substring(2));
             } else if (optionalBlockID.equals(OptionalBlockID.KC)) {
+                if (optionalBlockData.substring(0, 2).equals("00")) {
+                    PrintfUtil.d("KCV-algorithm", "Legacy KCV algorithm");
+                } else if (optionalBlockData.substring(0, 2).equals("00")) {
+                    PrintfUtil.d("KCV-algorithm", "CMAC based KCV");
+                }
                 PrintfUtil.d("KCV", optionalBlockData.substring(2));
+            } else if (optionalBlockID.equals(OptionalBlockID.HM)) {
+                if (optionalBlockData.substring(0, 2).equals("10")) {
+                    PrintfUtil.d("Hash algorithm", "SHA-1");
+                } else if (optionalBlockData.substring(0, 2).equals("20")) {
+                    PrintfUtil.d("Hash algorithm", "SHA-224");
+                } else if (optionalBlockData.substring(0, 2).equals("21")) {
+                    PrintfUtil.d("Hash algorithm", "SHA-256");
+                } else if (optionalBlockData.substring(0, 2).equals("22")) {
+                    PrintfUtil.d("Hash algorithm", "SHA-384");
+                } else if (optionalBlockData.substring(0, 2).equals("23")) {
+                    PrintfUtil.d("Hash algorithm", "SHA-512");
+                } else if (optionalBlockData.substring(0, 2).equals("24")) {
+                    PrintfUtil.d("Hash algorithm", "SHA-512/224");
+                } else if (optionalBlockData.substring(0, 2).equals("25")) {
+                    PrintfUtil.d("Hash algorithm", "SHA-512/256");
+                } else if (optionalBlockData.substring(0, 2).equals("30")) {
+                    PrintfUtil.d("Hash algorithm", "SHA3-224");
+                } else if (optionalBlockData.substring(0, 2).equals("31")) {
+                    PrintfUtil.d("Hash algorithm", "SHA3-256");
+                } else if (optionalBlockData.substring(0, 2).equals("32")) {
+                    PrintfUtil.d("Hash algorithm", "SHA3-384");
+                } else if (optionalBlockData.substring(0, 2).equals("33")) {
+                    PrintfUtil.d("Hash algorithm", "SHA3-512");
+                }
+                PrintfUtil.d("HM", optionalBlockData.substring(2));
             } else {
                 PrintfUtil.d("OptionalBlockData", optionalBlockData);
             }
@@ -577,8 +612,6 @@ public class TR31 {
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             macKey = aesDeriveMacKey(bpk);
             checkMac = AlgUtil.aesCMAC(macKey, Bytes.concat(keyHead, keyBlock));
-            // 释放
-            Arrays.fill(macKey, (byte) 0x00);
         }
         PrintfUtil.d("MacKey", Bytes.toHexString(macKey));
         PrintfUtil.d("CheckMac", Bytes.toHexString(checkMac));

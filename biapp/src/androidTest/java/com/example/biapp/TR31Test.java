@@ -46,4 +46,12 @@ public class TR31Test {
         PrintfUtil.d("pack", Bytes.toHexString(pack));
         tr31.unpack(pack, Bytes.fromHexString(tk));
     }
+
+    @Test
+    public void unpack(){
+        byte[] pack =Bytes.fromHexString("42303130344231545830304E303130304B533138333434344231344133424242344136423434343138374639373934464331303943333937314635304531463433453142393733383038393741444630363043383244303644384131433132423135303835393930");
+        byte[] tk=Bytes.fromHexString("000000000000000000000000000000000000000000000000");
+        TR31 tr31=new TR31();
+        tr31.unpack(pack, tk);
+    }
 }

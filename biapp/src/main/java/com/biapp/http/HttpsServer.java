@@ -3,37 +3,48 @@ package com.biapp.http;
 
 import com.biapp.BIApp;
 import com.biapp.lib.R;
+import com.biapp.util.FileUtil;
 import com.biapp.util.GsonUtil;
 import com.biapp.util.PrintfUtil;
 import com.koushikdutta.async.AsyncNetworkSocket;
-import com.koushikdutta.async.http.server.AsyncHttpServer;
 import com.koushikdutta.async.http.server.AsyncHttpServerRequest;
 import com.koushikdutta.async.http.server.AsyncHttpServerResponse;
 import com.koushikdutta.async.http.server.HttpServerRequestCallback;
 
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import io.reactivex.disposables.Disposable;
 
 
 /**
- * HttpServer
+ * HttpsServer
  *
  * @author Yun
  */
-public abstract class HttpServer implements HttpServerRequestCallback {
+public abstract class HttpsServer implements HttpServerRequestCallback {
 
     private final String TAG = this.getClass().getSimpleName();
 
     /***
-     * HTTP服务
+     * HTTPS服务
      */
-    private AsyncHttpServer httpServer;
+    private SSLAsyncHttpServer httpsServer;
     /**
      * 端口
      */
-    private int port = 5000;
+    private int port = 8888;
 
     /**
      * 响应
@@ -46,11 +57,11 @@ public abstract class HttpServer implements HttpServerRequestCallback {
 
     private Disposable workDisposable;
 
-    public HttpServer() {
+    public HttpsServer() {
         init(port);
     }
 
-    public HttpServer(int port) {
+    public HttpsServer(int port) {
         init(port);
     }
 
@@ -60,7 +71,7 @@ public abstract class HttpServer implements HttpServerRequestCallback {
     private void init(int port) {
         PrintfUtil.d(TAG, "onCreate");
         this.port = port;
-        httpServer = new AsyncHttpServer();
+        httpsServer = new SSLAsyncHttpServer();
     }
 
     public boolean isListener() {
@@ -79,9 +90,9 @@ public abstract class HttpServer implements HttpServerRequestCallback {
         this.interfaceNames = interfaceNames;
         if (!listener) {
             PrintfUtil.d(TAG, "startListener");
-            httpServer.get("[\\d\\D]*", this);
-            httpServer.post("[\\d\\D]*", this);
-            httpServer.listen(port);
+            httpsServer.get("[\\d\\D]*", this);
+            httpsServer.post("[\\d\\D]*", this);
+            httpsServer.listenSecure(port, getSSLContext());
             listener = true;
         }
     }
@@ -95,7 +106,7 @@ public abstract class HttpServer implements HttpServerRequestCallback {
             if (this.response != null) {
                 this.response.getSocket().close();
             }
-            httpServer.stop();
+            httpsServer.stop();
             listener = false;
             //停止工作
             if (workDisposable != null) {
@@ -179,4 +190,11 @@ public abstract class HttpServer implements HttpServerRequestCallback {
         }
         return in;
     }
+
+    /**
+     * 获得SSLContext
+     *
+     * @return
+     */
+    protected abstract SSLContext getSSLContext();
 }

@@ -1,8 +1,6 @@
 package com.biapp.http;
 
 
-import android.util.Base64;
-
 import com.biapp.BIApp;
 import com.biapp.BIAppException;
 import com.biapp.lib.R;
@@ -10,31 +8,18 @@ import com.biapp.util.FormatUtil;
 import com.biapp.util.GsonUtil;
 import com.biapp.util.PrintfUtil;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
-import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.security.KeyFactory;
 import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +32,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import aura.data.Bytes;
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Single;
@@ -71,16 +55,14 @@ public class RetrofitClient {
 
     private String host;
     private HttpHeader header;
-    private SSLSocketFactory sslSocketFactory;
+    private SSLContext sslContext;
     private X509TrustManager trustManager;
     private OkHttpClient.Builder okHttpClientBuilder;
     private OkHttpClient okHttpClient;
     private retrofit2.Retrofit.Builder retrofitBuilder;
     private retrofit2.Retrofit retrofit;
-    private boolean mutualAuth = false;
     private String sslProtocol = "TLSv1.2";
     private String contextType = "application/json";
-    private CertificateFactory certificateFactory;
     private int connectTimeout = 15;
     private int writeTimeout = 15;
     private File cacheDir;
@@ -92,8 +74,6 @@ public class RetrofitClient {
     public static String CONNECT_EXCEPTION = BIApp.getContext().getString(R.string.connect_exception);
     public static String TIMEOUT_EXCEPTION = BIApp.getContext().getString(R.string.timeout_exception);
     public static String SSL_EXCEPTION = BIApp.getContext().getString(R.string.sll_exception);
-    public static String CERT_EXCEPTION = BIApp.getContext().getString(R.string.cert_exception);
-    public static String CERT_ALG_EXCEPTION = BIApp.getContext().getString(R.string.cert_alg_exception);
     public static String HTTP_EXCEPTION = BIApp.getContext().getString(R.string.http_exception);
 
     public RetrofitClient() {
@@ -135,32 +115,8 @@ public class RetrofitClient {
         return this;
     }
 
-    public RetrofitClient setHttpsCert(InputStream serverPubilcKeyCertInputStream) {
-        return setHttpsCert(serverPubilcKeyCertInputStream, null);
-    }
-
-    public RetrofitClient setHttpsCert(InputStream serverPubilcKeyCertInputStream, String serverPubilcKeyCertPwd) {
-        this.sslSocketFactory = getSSLSocketFactory(serverPubilcKeyCertInputStream, serverPubilcKeyCertPwd, null, null);
-        return this;
-    }
-
-    public RetrofitClient setHttpsCert(InputStream serverPubilcKeyCertInputStream, InputStream clientPrivateKeyFileInputStream, InputStream caCertInputStream) {
-        this.sslSocketFactory = getSSLSocketFactory(serverPubilcKeyCertInputStream, null, clientPrivateKeyFileInputStream, caCertInputStream);
-        return this;
-    }
-
-    public RetrofitClient setHttpsCert(InputStream serverPubilcKeyCertInputStream, String serverPubilcKeyCertPwd, InputStream clientPrivateKeyFileInputStream, InputStream caCertInputStream) {
-        this.sslSocketFactory = getSSLSocketFactory(serverPubilcKeyCertInputStream, serverPubilcKeyCertPwd, clientPrivateKeyFileInputStream, caCertInputStream);
-        return this;
-    }
-
-    public RetrofitClient setCertificateFactory(CertificateFactory certificateFactory) {
-        this.certificateFactory = certificateFactory;
-        return this;
-    }
-
-    public RetrofitClient setMutualAuth(boolean mutualAuth) {
-        this.mutualAuth = mutualAuth;
+    public RetrofitClient setContextType(String contextType) {
+        this.contextType = contextType;
         return this;
     }
 
@@ -169,8 +125,21 @@ public class RetrofitClient {
         return this;
     }
 
-    public RetrofitClient setContextType(String contextType) {
-        this.contextType = contextType;
+    public RetrofitClient initSSLContext(KeyManagerFactory keyManagerFactory, TrustManagerFactory trustManagerFactory) {
+        try {
+            this.sslContext = SSLContext.getInstance(sslProtocol);
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+            if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                throw new IllegalStateException("Unexpected default trust managers:"
+                        + Arrays.toString(trustManagers));
+            }
+            trustManager = (X509TrustManager) trustManagers[0];
+            sslContext.init(keyManagerFactory == null ? null : keyManagerFactory.getKeyManagers(),
+                    new TrustManager[]{trustManager},
+                    null);
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
         return this;
     }
 
@@ -218,8 +187,10 @@ public class RetrofitClient {
         okHttpClientBuilder.connectTimeout(connectTimeout, TimeUnit.SECONDS);
         okHttpClientBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
         //设置HTTPS协议
-        if (this.sslSocketFactory != null) {
-            okHttpClientBuilder.sslSocketFactory(sslSocketFactory, trustManager);
+        if (this.sslContext != null) {
+            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            okHttpClientBuilder.sslSocketFactory(sslSocketFactory);
+            okHttpClientBuilder.hostnameVerifier((hostname, session) -> true);
         }
         //设置头部
         if (this.header != null && !this.header.getHeaders().isEmpty()) {
@@ -231,115 +202,6 @@ public class RetrofitClient {
         return okHttpClientBuilder;
     }
 
-
-    private SSLSocketFactory getSSLSocketFactory(InputStream serverPubilcKeyCertInputStream, String serverPubilcKeyCertPwd, InputStream clientPrivateKeyFileInputStream, InputStream caCertInputStream) {
-        try {
-            SSLContext sslContext = SSLContext.getInstance(sslProtocol);
-            if (mutualAuth) {
-                Certificate caCert = certificateFactory.generateCertificate(caCertInputStream);
-                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                trustStore.load(null, null);
-                trustStore.setCertificateEntry("ca", caCert);
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                        TrustManagerFactory.getDefaultAlgorithm());
-                trustManagerFactory.init(trustStore);
-                TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-                trustManager = (X509TrustManager) trustManagers[0];
-
-                TrustManager[] wrappedTrustManagers = new TrustManager[]{
-                        new X509TrustManager() {
-
-                            @Override
-                            public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                                trustManager.checkClientTrusted(x509Certificates, authType);
-                            }
-
-                            @Override
-                            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-
-                            }
-
-                            @Override
-                            public X509Certificate[] getAcceptedIssuers() {
-                                return trustManager.getAcceptedIssuers();
-                            }
-                        }
-                };
-                KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
-                        KeyManagerFactory.getDefaultAlgorithm());
-                KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                keyStore.load(null, null);
-
-                Certificate serverPubilcKeyCert = certificateFactory.generateCertificate(serverPubilcKeyCertInputStream);
-
-                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-
-                byte[] data = new byte[4096];
-                int read = -1;
-                while ((read = clientPrivateKeyFileInputStream.read(data)) != -1) {
-                    outStream.write(data, 0, read);
-                }
-
-                String key = new String(outStream.toByteArray(), "ISO-8859-1");
-
-                StringBuilder pkcs8Lines = new StringBuilder();
-                BufferedReader bufferedReader = new BufferedReader(new StringReader(key));
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    pkcs8Lines.append(line);
-                }
-
-                String pkcs8Pem = pkcs8Lines.toString();
-                pkcs8Pem = pkcs8Pem.replace("-----BEGIN PRIVATE KEY-----", "");
-                pkcs8Pem = pkcs8Pem.replace("-----END PRIVATE KEY-----", "");
-                pkcs8Pem = pkcs8Pem.replaceAll("\\s+", "");
-
-                byte[] encoderByte = Base64.decode(pkcs8Pem, Base64.DEFAULT);
-
-                PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoderByte);
-                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
-                keyStore.setKeyEntry("server", privateKey, null, new Certificate[]{serverPubilcKeyCert});
-
-                keyManagerFactory.init(keyStore, null);
-
-                sslContext.init(keyManagerFactory.getKeyManagers(), wrappedTrustManagers, null);
-
-                serverPubilcKeyCertInputStream.close();
-                clientPrivateKeyFileInputStream.close();
-                caCertInputStream.close();
-
-                sslSocketFactory = sslContext.getSocketFactory();
-            } else {
-                Certificate serverPubilcKeyCert = certificateFactory.generateCertificate(serverPubilcKeyCertInputStream);
-                PrintfUtil.d("ServerPublicKey", Bytes.toHexString(serverPubilcKeyCert.getPublicKey().getEncoded()));
-                KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                keyStore.load(null, serverPubilcKeyCertPwd == null ? null : serverPubilcKeyCertPwd.toCharArray());
-                keyStore.setCertificateEntry("server", serverPubilcKeyCert);
-                String algorithm = TrustManagerFactory.getDefaultAlgorithm();
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(algorithm);
-                trustManagerFactory.init(keyStore);
-                sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
-                serverPubilcKeyCertInputStream.close();
-                sslSocketFactory = sslContext.getSocketFactory();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        }
-        return sslSocketFactory;
-    }
 
     /**
      * get请求
@@ -359,6 +221,7 @@ public class RetrofitClient {
                 .onErrorResumeNext(throwable -> {
 //                    PrintfUtil.d("ErrorType", throwable.getClass().getName());
 //                    PrintfUtil.d("ErrorMsg", throwable.getMessage());
+                    PrintfUtil.e(throwable);
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -402,6 +265,7 @@ public class RetrofitClient {
                 .onErrorResumeNext(throwable -> {
 //                    PrintfUtil.d("errorType", throwable.getClass().getName());
 //                    PrintfUtil.d("errorMsg", throwable.getMessage());
+                    PrintfUtil.e(throwable);
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -443,6 +307,7 @@ public class RetrofitClient {
                 .onErrorResumeNext(throwable -> {
 //                    PrintfUtil.d("errorType", throwable.getClass().getName());
 //                    PrintfUtil.d("errorMsg", throwable.getMessage());
+                    PrintfUtil.e(throwable);
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -486,6 +351,7 @@ public class RetrofitClient {
                 .onErrorResumeNext(throwable -> {
 //                    PrintfUtil.d("errorType", throwable.getClass().getName());
 //                    PrintfUtil.d("errorMsg", throwable.getMessage());
+                    PrintfUtil.e(throwable);
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -529,6 +395,7 @@ public class RetrofitClient {
                 .onErrorResumeNext(throwable -> {
 //                    PrintfUtil.d("errorType", throwable.getClass().getName());
 //                    PrintfUtil.d("errorMsg", throwable.getMessage());
+                    PrintfUtil.e(throwable);
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {
@@ -573,6 +440,7 @@ public class RetrofitClient {
                 .onErrorResumeNext(throwable -> {
 //                    PrintfUtil.d("errorType", throwable.getClass().getName());
 //                    PrintfUtil.e(throwable, "errorMsg", throwable.getMessage());
+                    PrintfUtil.e(throwable);
                     if (throwable instanceof UnknownHostException) {
                         return Single.error(new UnknownHostException(UNKNOWN_HOST_EXCEPTION));
                     } else if (throwable instanceof ProtocolException) {

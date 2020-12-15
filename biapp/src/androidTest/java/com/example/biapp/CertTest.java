@@ -83,26 +83,6 @@ public class CertTest {
     }
 
     @Test
-    public void rsaTest() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        X509Certificate cert = CertUtil.pem2Cert(FileUtil.readString(FileUtil.readAssetsFile(context, "apos_enc.crt"), "UTF-8"));
-        RSAPublicKey publicKey = (RSAPublicKey) cert.getPublicKey();
-        RSAPrivateCrtKey privateKey = CertUtil.pem2RSAPrivateKey(FileUtil.readString(FileUtil.readAssetsFile(context, "apos_enc.key"), "UTF-8"));
-        byte[] data = "1234567890abcdefghijklmnopqrstuvwxyz".getBytes();
-        byte[] sign = CertUtil.sign(privateKey, data, "SHA256withRSA");
-        PrintfUtil.d("sign", Bytes.toHexString(sign));
-        boolean verify = CertUtil.verifySign(publicKey, data, sign, "SHA256withRSA");
-        PrintfUtil.d("verify", verify + "");
-        byte[] encrypt = AlgUtil.encrypt(publicKey, AlgUtil.AsymmetricPadding.OAEPWITHSHA256AndMGF1Padding, data);
-        PrintfUtil.d("encrypt", Bytes.toHexString(encrypt));
-        PrintfUtil.d("decrypt", Bytes.equals(data, AlgUtil.decrypt(privateKey, AlgUtil.AsymmetricPadding.OAEPWITHSHA256AndMGF1Padding, encrypt)) + "");
-
-        byte[] encData = Bytes.fromHexString("22FB550105B1E2BDCBF34495503003080BAA9C3F1F1AB184888C14A023E8297139C63555D298D10E275539B2B460E825EAADB47A4FC6E307D9B2444BAE81871B94D887DA49DD26E823B3A323AE381441741C85328B8B6ACEB00C4329BA25570B2B11300C455E0D743F157FB6F88C451AEAE61052840D7686F93135637E975694C392A1FD21C3823DF2700E8F35E269D5352790522C8228B2D3594C46C02073EFB502D430F07C6036A84FE65A84127B1620B4C53AC2098D2B9D82914DB9337734B0EB1C398D3EDB42F971791165DD2E325B31EF35FC6F6B574C2D21872D83C85FD01E2592867E697B292F298D0FF59E19FF57342EF171E8C3ECBCCE2A5C76D69D");
-        PrintfUtil.d("data", Bytes.toHexString(AlgUtil.decrypt(privateKey, AlgUtil.AsymmetricPadding.OAEPWITHSHA256AndMGF1Padding, encData)));
-
-    }
-
-    @Test
     public void X509RSACertTest() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         CertUtil.X509RSACert cert = CertUtil.getX509RSACert(FileUtil.toByteArray(FileUtil.readAssetsFile(context,"BSWC_3_D.crt")));

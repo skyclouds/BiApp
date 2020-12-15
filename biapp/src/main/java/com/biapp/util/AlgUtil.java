@@ -3,20 +3,29 @@ package com.biapp.util;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.engines.DESEngine;
 import org.bouncycastle.crypto.engines.DESedeEngine;
 import org.bouncycastle.crypto.macs.CMac;
+import org.bouncycastle.crypto.macs.ISO9797Alg3Mac;
+import org.bouncycastle.crypto.paddings.ISO7816d4Padding;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.RSAKeyGenerationParameters;
+import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
+import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.Security;
-import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.RSAKeyGenParameterSpec;
 import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
@@ -35,12 +44,19 @@ import aura.data.Ints;
  */
 public class AlgUtil {
 
+    // 增加BouncyCastle
+    private static final Provider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
+
+    static {
+        Security.addProvider(BOUNCY_CASTLE_PROVIDER);
+    }
+
     /**
      * 对称算法
      */
     public enum SymmetryAlgorithm {
 
-        RC2("RC2"), DES("DES"), TDES("DESede"), AES("AES");
+        DES("DES"), TDES("DESede"), AES("AES"), SM4("SM4");
 
         private String name;
 
@@ -63,15 +79,15 @@ public class AlgUtil {
     }
 
     /**
-     * 算法模式
+     * 对称模式
      */
-    public enum AlgorithmModel {
+    public enum SymmetryModel {
 
-        ECB("ECB"), CBC("CBC"), CFB("CFB"), CTR("CTR"), CTS("CTS"), OFB("OFB"), PCBC("PCBC");
+        ECB("ECB"), CBC("CBC"), GCM("GCM"), CTR("CTR");
 
         private String name;
 
-        private AlgorithmModel(final String name) {
+        private SymmetryModel(final String name) {
             this.name = name;
         }
 
@@ -94,7 +110,10 @@ public class AlgUtil {
      */
     public enum SymmetryPadding {
 
-        NoPadding("NoPadding"), ZeroPadding("ZeroPadding"), PKCS5Padding("PKCS5Padding"), ISO10126Padding("ISO10126Padding");
+        NoPadding("NoPadding"), ZeroBytePadding("ZeroBytePadding"), PKCS5Padding("PKCS5Padding"),
+        PKCS7Padding("PKCS7Padding"), ISO9797_1Padding("ISO9797-1Padding"), ISO7816_4Padding("ISO7816-4Padding"),
+        ISO10126Padding("ISO10126Padding"), ISO10126_2Padding("ISO10126-2Padding"), X923Padding("X923Padding"),
+        X9_23Padding("X9.23Padding");
 
         private String name;
 
@@ -116,32 +135,62 @@ public class AlgUtil {
         }
     }
 
+    /**
+     * 加密
+     *
+     * @param algorithm
+     * @param model
+     * @param padding
+     * @param key
+     * @param iv
+     * @param data
+     * @return
+     */
+    public static byte[] encrypt(SymmetryAlgorithm algorithm, SymmetryModel model, SymmetryPadding padding, byte[] key,
+                                 byte[] iv, byte[] data) {
+        try {
+            SecretKeySpec keyspec = new SecretKeySpec(key, algorithm.getName());
+            Cipher cipher = Cipher.getInstance(algorithm.getName() + "/" + model.getName() + "/" + padding.getName());
+            IvParameterSpec ivParameterSpec = null;
+            if (iv != null) {
+                ivParameterSpec = new IvParameterSpec(iv);
+            }
+            cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivParameterSpec);
+            return cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     /**
-     * 非对称填充
+     * 加密
+     *
+     * @param algorithm
+     * @param model
+     * @param padding
+     * @param key
+     * @param iv
+     * @param data
+     * @return
      */
-    public enum AsymmetricPadding {
-
-        NoPadding("NoPadding"), PKCS1Padding("PKCS1Padding"), OAEPWITHMD5AndMGF1Padding("OAEPWITHMD5AndMGF1Padding"), OAEPWITHSHA1AndMGF1Padding("OAEPWITHSHA1AndMGF1Padding"), OAEPWITHSHA256AndMGF1Padding("OAEPWITHSHA256AndMGF1Padding"), OAEPWITHSHA384AndMGF1Padding("OAEPWITHSHA384AndMGF1Padding"), OAEPWITHSHA512AndMGF1Padding("OAEPWITHSHA512AndMGF1Padding");
-
-        private String name;
-
-        private AsymmetricPadding(final String name) {
-            this.name = name;
+    public static byte[] decrypt(SymmetryAlgorithm algorithm, SymmetryModel model, SymmetryPadding padding, byte[] key,
+                                 byte[] iv, byte[] data) {
+        try {
+            SecretKeySpec keyspec = new SecretKeySpec(key, algorithm.getName());
+            Cipher cipher = Cipher.getInstance(algorithm.getName() + "/" + model.getName() + "/" + padding.getName());
+            IvParameterSpec ivParameterSpec = null;
+            if (iv != null) {
+                ivParameterSpec = new IvParameterSpec(iv);
+            }
+            cipher.init(Cipher.DECRYPT_MODE, keyspec, ivParameterSpec);
+            return cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
         }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
+        return null;
     }
 
     /**
@@ -149,7 +198,9 @@ public class AlgUtil {
      */
     public enum HashAlgorithm {
 
-        MD2("MD2"), MD5("MD5"), SHA1("SHA-1"), SHA256("SHA-256"), SHA384("SHA-384"), SHA512("SHA-512");
+        MD2("MD2"), MD4("MD4"), MD5("MD5"), SHA1("SHA-1"), SHA224("SHA-224"), SHA256("SHA-256"), SHA384("SHA-384"),
+        SHA512("SHA-512"), SHA3_224("SHA3-224"), SHA3_256("SHA3-256"), SHA3_384("SHA3-384"), SHA3_512("SHA3-512"),
+        SM3("SM3");
 
         private String name;
 
@@ -172,11 +223,32 @@ public class AlgUtil {
     }
 
     /**
+     * 散列
+     *
+     * @param algorithm
+     * @param data
+     * @return
+     */
+    public static byte[] hash(HashAlgorithm algorithm, byte[] data) {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance(algorithm.getName());
+            messageDigest.update(data);
+            return messageDigest.digest();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * MAC算法
      */
     public enum MACAlgorithm {
 
-        HmacMD5("HmacMD5"), HmacSHA1("HmacSHA1"), HmacSHA256("HmacSHA256"), HmacSHA384("HmacSHA384"), HmacSHA512("HmacSHA512");
+        MD5withRSA("MD5withRSA"), SHA1withRSA("SHA1withRSA"), SHA224withRSA("SHA224withRSA"),
+        SHA256withRSA("SHA256withRSA"), SHA384withRSA("SHA384withRSA"), SHA512withRSA("SHA512withRSA"),
+        SHA3_224withRSA("SHA3-224withRSA"), SHA3_256withRSA("SHA3-256withRSA"), SHA3_384withRSA("SHA3-384withRSA"),
+        SHA3_512withRSA("SHA3-512withRSA"), SHA256withSM2("SHA256withSM2"), SM3withSM2("SM3withSM2");
 
         private String name;
 
@@ -196,264 +268,6 @@ public class AlgUtil {
         public String toString() {
             return this.name;
         }
-    }
-
-    /**
-     * 生成RSA公私钥对
-     *
-     * @param keyLength
-     * @return
-     */
-    public static KeyPair generateRSAKeyPair(int keyLength) {
-        KeyPair keyPair = null;
-        try {
-            KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-            keyPairGen.initialize(keyLength);
-            keyPair = keyPairGen.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return keyPair;
-    }
-
-    /**
-     * 加密
-     *
-     * @param algorithm
-     * @param mode
-     * @param padding
-     * @param key
-     * @param iv
-     * @param data
-     * @return
-     */
-    public static byte[] encrypt(SymmetryAlgorithm algorithm, AlgorithmModel mode, SymmetryPadding padding, byte[] key,
-                                 byte[] iv, byte[] data) {
-        try {
-            if (padding == SymmetryPadding.ZeroPadding) {
-                padding = SymmetryPadding.NoPadding;
-                int blockSize = (algorithm == SymmetryAlgorithm.AES) ? 16 : 8;
-                if (data.length % blockSize != 0) {
-                    int paddingLen = (blockSize - (data.length % blockSize));
-                    byte[] paddingData = new byte[paddingLen];
-                    data = Bytes.concat(data, paddingData);
-                }
-            }
-            //处理双倍长TDES
-            if (algorithm == SymmetryAlgorithm.TDES && key.length == 16) {
-                if (mode == AlgorithmModel.ECB) {
-                    return encryptBy2DESECBNoPadding(key, data);
-                } else if (mode == AlgorithmModel.CBC) {
-                    byte[] enc = iv;
-                    byte[] result = null;
-                    for (int round = 0; round < data.length / 8; round++) {
-                        byte[] xor = new byte[8];
-                        byte[] tmp = Bytes.subBytes(data, round * 8, 8);
-                        for (int j = 0; j < xor.length; j++) {
-                            xor[j] = (byte) (enc[j] ^ tmp[j]);
-                        }
-                        enc = encryptBy2DESECBNoPadding(key, xor);
-                        if (result == null) {
-                            result = enc;
-                        } else {
-                            result = Bytes.concat(result, enc);
-                        }
-                    }
-                    return result;
-                }
-            }
-            SecretKeySpec keyspec = new SecretKeySpec(key, algorithm.getName());
-            Cipher cipher = Cipher.getInstance(algorithm.getName() + "/" + mode.getName() + "/" + padding.getName());
-            if (mode == AlgorithmModel.ECB) {
-                cipher.init(Cipher.ENCRYPT_MODE, keyspec);
-            } else {
-                IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-                cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivParameterSpec);
-            }
-            return cipher.doFinal(data);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 双倍长DES ECB NoPadding
-     *
-     * @param key
-     * @param data
-     * @return
-     */
-    private static byte[] encryptBy2DESECBNoPadding(byte[] key, byte[] data) {
-        byte[] leftKey = Bytes.subBytes(key, 0, 8);
-        byte[] rightKey = Bytes.subBytes(key, 8, 16);
-        byte[] step1 = encrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, data);
-        byte[] step2 = decrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, rightKey, null, step1);
-        return encrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, step2);
-    }
-
-
-    /**
-     * RSA加密
-     *
-     * @param publicKey
-     * @param padding
-     * @param data
-     * @return
-     */
-    public static byte[] encrypt(RSAPublicKey publicKey, AsymmetricPadding padding, byte[] data) {
-        try {
-            Security.addProvider(new BouncyCastleProvider());
-            Cipher cipher = Cipher.getInstance("RSA" + "/" + "None" + "/" + padding);
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            return cipher.doFinal(data);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 解密
-     *
-     * @param algorithm
-     * @param key
-     * @param iv
-     * @param data
-     * @return
-     */
-    public static byte[] decrypt(SymmetryAlgorithm algorithm, AlgorithmModel mode, SymmetryPadding padding, byte[] key,
-                                 byte[] iv, byte[] data) {
-        try {
-            if (padding == SymmetryPadding.ZeroPadding) {
-                padding = SymmetryPadding.NoPadding;
-            }
-            //处理双倍长TDES
-            if (algorithm == SymmetryAlgorithm.TDES && key.length == 16) {
-                if (mode == AlgorithmModel.ECB) {
-                    return decryptBy2DESECBNoPadding(key, data);
-                } else if (mode == AlgorithmModel.CBC) {
-                    byte[] enc = iv;
-                    byte[] result = null;
-                    for (int round = 0; round < data.length / 8; round++) {
-                        byte[] tmp = Bytes.subBytes(data, round * 8, 8);
-                        byte[] dec = decryptBy2DESECBNoPadding(key, tmp);
-                        byte[] xor = new byte[8];
-                        for (int j = 0; j < xor.length; j++) {
-                            xor[j] = (byte) (enc[j] ^ dec[j]);
-                        }
-                        enc = tmp;
-                        if (result == null) {
-                            result = xor;
-                        } else {
-                            result = Bytes.concat(result, xor);
-                        }
-                    }
-                    return result;
-                }
-            }
-            SecretKeySpec keyspec = new SecretKeySpec(key, algorithm.getName());
-            Cipher cipher = Cipher.getInstance(algorithm.getName() + "/" + mode.getName() + "/" + padding.getName());
-            if (mode == AlgorithmModel.ECB) {
-                cipher.init(Cipher.DECRYPT_MODE, keyspec);
-            } else {
-                IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-                cipher.init(Cipher.DECRYPT_MODE, keyspec, ivParameterSpec);
-            }
-            return cipher.doFinal(data);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 双倍长DES ECB NoPadding
-     *
-     * @param key
-     * @param data
-     * @return
-     */
-    private static byte[] decryptBy2DESECBNoPadding(byte[] key, byte[] data) {
-        byte[] leftKey = Bytes.subBytes(key, 0, 8);
-        byte[] rightKey = Bytes.subBytes(key, 8, 16);
-        byte[] step1 = decrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, data);
-        byte[] step2 = encrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, rightKey, null, step1);
-        return decrypt(SymmetryAlgorithm.DES, AlgorithmModel.ECB, SymmetryPadding.NoPadding, leftKey, null, step2);
-    }
-
-    /**
-     * RSA解密
-     *
-     * @param privateKey
-     * @param padding
-     * @param data
-     * @return
-     */
-    public static byte[] decrypt(RSAPrivateKey privateKey, AsymmetricPadding padding, byte[] data) {
-        try {
-            Security.addProvider(new BouncyCastleProvider());
-            Cipher cipher = Cipher.getInstance("RSA" + "/" + "None" + "/" + padding);
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            return cipher.doFinal(data);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 散列
-     *
-     * @param algorithm
-     * @param data
-     * @return
-     */
-    public static byte[] hash(HashAlgorithm algorithm, byte[] data) {
-        try {
-            MessageDigest messageDigest = MessageDigest.getInstance(algorithm.getName());
-            messageDigest.update(data);
-            return messageDigest.digest();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     /**
@@ -479,20 +293,157 @@ public class AlgUtil {
     }
 
     /**
-     * 获得随机数
+     * ISO9797-1 Padding Method 1
      *
-     * @param len
+     * @param keyBlockSize
+     * @param data
      * @return
      */
-    public static byte[] getRandom(int len) {
-        byte[] random = new byte[len];
-        for (int i = 0; i < random.length; i++) {
-            int value = (int) (Math.random() * 15);
-            char data = (char) value;
-            random[i] = (byte) data;
+    public static byte[] ISO9797_1Padding_Method1(int keyBlockSize, byte[] data) {
+        if (data.length % keyBlockSize != 0) {
+            byte[] padding = new byte[keyBlockSize-data.length % keyBlockSize];
+            Arrays.fill(padding, (byte) 0x00);
+            return Bytes.concat(data, padding);
+        } else {
+            return data;
         }
-        return random;
     }
+
+    /**
+     * MAC算法填充
+     */
+    public enum MacAlgorithmPadding{
+        Method1, Method2, Method3;
+    }
+
+    /**
+     * ISO9797-1 Padding Method 1
+     *
+     * @param keyBlockSize
+     * @param data
+     * @return
+     */
+    public static byte[] ISO9797_1Padding_Method2(int keyBlockSize, byte[] data) {
+        byte[] padding;
+        if (data.length % keyBlockSize != 0) {
+            padding = new byte[keyBlockSize-data.length % keyBlockSize];
+        } else {
+            padding = new byte[keyBlockSize];
+        }
+        Arrays.fill(padding, (byte) 0x00);
+        padding[0] = (byte) 0x80;
+        return Bytes.concat(data, padding);
+    }
+
+    /**
+     * ISO9797-1 Padding Method 1
+     *
+     * @param keyBlockSize
+     * @param data
+     * @return
+     */
+    public static byte[] ISO9797_1Padding_Method3(int keyBlockSize, byte[] data) {
+        int dataBitSize = data.length * 8;
+        byte[] paddingStart = Bytes.fromHexString(FormatUtil.addHead('0', keyBlockSize*2, Integer.toHexString(dataBitSize)));
+        if (data.length % keyBlockSize != 0) {
+            byte[] paddingEnd = new byte[keyBlockSize-data.length % keyBlockSize];
+            Arrays.fill(paddingEnd, (byte) 0x00);
+            return Bytes.concat(paddingStart, data, paddingEnd);
+        } else {
+            return Bytes.concat(paddingStart, data);
+        }
+    }
+
+
+    /**
+     * ISO9797-1 MAC Algorithm1
+     * @param key
+     * @param data
+     * @param padding
+     * @return
+     */
+    public static byte[] ISO9797_1_MACAlgorithm1(byte[] key,byte[] data,MacAlgorithmPadding padding){
+        if(padding==MacAlgorithmPadding.Method1){
+            data =ISO9797_1Padding_Method1(8,data);
+        }else if(padding==MacAlgorithmPadding.Method2){
+            data =ISO9797_1Padding_Method2(8,data);
+        }else if(padding==MacAlgorithmPadding.Method3){
+            data =ISO9797_1Padding_Method3(8,data);
+        }
+        byte[] iv=new byte[8];
+        byte[] h=null;
+        byte[] d=null;
+        for(int round=0;round<data.length/8;round++){
+            d=Bytes.subBytes(data, round*8, 8);
+            if(round>0){
+                d=Bytes.xor(d, h);
+                //PrintfUtil.d("D"+(round+1)+"+"+"H"+(round), Bytes.toHexString(d));
+            }
+            h=encrypt(SymmetryAlgorithm.DES,SymmetryModel.CBC,SymmetryPadding.NoPadding, key,iv,d);
+            //PrintfUtil.d("H"+(round+1), Bytes.toHexString(h));
+        }
+        return h;
+    }
+
+    /**
+     * ISO9797-1 MAC Algorithm3
+     * @param key
+     * @param data
+     * @param padding
+     * @return
+     */
+    public static byte[] ISO9797_1_MACAlgorithm3(byte[] key,byte[] data,MacAlgorithmPadding padding){
+        byte[] out = new byte[8];
+        if (key.length != 16) {
+            throw new IllegalArgumentException("key length must be 16 bytes");
+        }
+        if (padding == MacAlgorithmPadding.Method1) {
+            data = ISO9797_1Padding_Method1(8, data);
+        } else if (padding == MacAlgorithmPadding.Method2) {
+            data = ISO9797_1Padding_Method2(8, data);
+        } else if (padding == MacAlgorithmPadding.Method3) {
+            data = ISO9797_1Padding_Method3(8, data);
+        }
+        BlockCipher cipher = new DESEngine();
+        org.bouncycastle.crypto.Mac mac = new ISO9797Alg3Mac(cipher, 64);
+        KeyParameter keyParameter = new KeyParameter(key);
+        mac.init(keyParameter);
+        mac.update(data, 0, data.length);
+        mac.doFinal(out, 0);
+        return out;
+    }
+
+    /**
+     * ISO16609_1 MAC Algorithm1
+     *
+     * @param key
+     * @param data
+     * @param padding
+     * @return
+     */
+    public static byte[] ISO16609_1_MACAlgorithm1(byte[] key, byte[] data, MacAlgorithmPadding padding){
+        if (padding == MacAlgorithmPadding.Method1) {
+            data = ISO9797_1Padding_Method1(8, data);
+        } else if (padding == MacAlgorithmPadding.Method2) {
+            data = ISO9797_1Padding_Method2(8, data);
+        } else if (padding == MacAlgorithmPadding.Method3) {
+            data = ISO9797_1Padding_Method3(8, data);
+        }
+        byte[] iv = new byte[8];
+        byte[] h = null;
+        byte[] d = null;
+        for (int round = 0; round < data.length / 8; round++) {
+            d = Bytes.subBytes(data, round * 8, 8);
+            if (round > 0) {
+                d = Bytes.xor(d, h);
+                //PrintfUtil.d("D"+(round+1)+"+"+"H"+(round), Bytes.toHexString(d));
+            }
+            h = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.NoPadding, key, iv, d);
+            //PrintfUtil.d("H"+(round+1), Bytes.toHexString(h));
+        }
+        return h;
+    }
+
 
     /**
      * @param key
@@ -501,9 +452,8 @@ public class AlgUtil {
     public static byte[] tdesLegacyKCV(byte[] key) {
         byte[] zero = new byte[8];
         Arrays.fill(zero, (byte) 0x00);
-        return encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.CBC, SymmetryPadding.ZeroPadding, key, zero, zero);
+        return encrypt(SymmetryAlgorithm.TDES, SymmetryModel.CBC, SymmetryPadding.NoPadding, key, zero, zero);
     }
-
 
     /**
      * @param key
@@ -512,7 +462,7 @@ public class AlgUtil {
     public static byte[] aesLegacyKCV(byte[] key) {
         byte[] zero = new byte[16];
         Arrays.fill(zero, (byte) 0x00);
-        return encrypt(SymmetryAlgorithm.AES, AlgorithmModel.CBC, SymmetryPadding.ZeroPadding, key, zero, zero);
+        return encrypt(SymmetryAlgorithm.AES, SymmetryModel.CBC, SymmetryPadding.NoPadding, key, zero, zero);
     }
 
     /**
@@ -538,8 +488,6 @@ public class AlgUtil {
         Arrays.fill(zero, (byte) 0x00);
         return aesCMAC(key, zero);
     }
-
-
 
     /**
      * TDES MCAC
@@ -585,7 +533,7 @@ public class AlgUtil {
      * @return
      */
     public static byte[] tdesIK(byte[] bdk, byte[] ksn) {
-        //TDES DUKPT 没有24字节密钥
+        // TDES DUKPT 没有24字节密钥
         if (bdk.length != 16) {
             throw new IllegalArgumentException("bdk length error");
         }
@@ -593,14 +541,16 @@ public class AlgUtil {
             throw new IllegalArgumentException("ksn length error");
         }
         byte[] ik;
-        byte[] makeEBdk = new byte[]{(byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00};
+        byte[] makeEBdk = new byte[] { (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00,
+                (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00 };
         byte[] ksnTmp = Bytes.subBytes(ksn, 0, 8);
-        //根据算法需要把原来的80个bit的KSN后21bit清零
+        // 根据算法需要把原来的80个bit的KSN后21bit清零
         ksnTmp[7] &= 0xE0;
-        ik = encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding, bdk, null, ksnTmp);
-        //bdk与makeEBdk异或
+        ik = encrypt(SymmetryAlgorithm.TDES, SymmetryModel.ECB, SymmetryPadding.NoPadding, bdk, null, ksnTmp);
+        // bdk与makeEBdk异或
         byte[] xorTmp = Bytes.xor(bdk, makeEBdk);
-        xorTmp = encrypt(SymmetryAlgorithm.TDES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding, xorTmp, null, ksnTmp);
+        xorTmp = encrypt(SymmetryAlgorithm.TDES, SymmetryModel.ECB, SymmetryPadding.NoPadding, xorTmp, null,
+                ksnTmp);
         ik = Bytes.concat(ik, xorTmp);
         return ik;
     }
@@ -628,7 +578,7 @@ public class AlgUtil {
         // set Key Block Counter.1 for first block, 2 for second, etc.
         derivData[1] = 0x01;
         // set Key Usage Indicator
-        byte[] keyUsage = new byte[]{(byte) 0x80, 0x01};
+        byte[] keyUsage = new byte[] { (byte) 0x80, 0x01 };
         derivData[2] = keyUsage[0];
         derivData[3] = keyUsage[1];
         byte[] algIndi = new byte[2];
@@ -663,7 +613,8 @@ public class AlgUtil {
         derivData[7] = keyLength[1];
         System.arraycopy(ksnTmp, 0, derivData, 8, 8);
         for (int i = 0; i < blockNum; i++) {
-            byte[] result = encrypt(SymmetryAlgorithm.AES, AlgorithmModel.ECB, SymmetryPadding.ZeroPadding, bdk, null, derivData);
+            byte[] result = encrypt(SymmetryAlgorithm.AES, SymmetryModel.ECB, SymmetryPadding.NoPadding, bdk,
+                    null, derivData);
             if (Bytes.isNullOrEmpty(ik)) {
                 ik = result;
             } else {
@@ -719,4 +670,230 @@ public class AlgUtil {
         }
         return newKsn;
     }
+
+    /**
+     * 获得随机数
+     *
+     * @param len
+     * @return
+     */
+    public static byte[] getRandom(int len) {
+        byte[] random = new byte[len];
+        for (int i = 0; i < random.length; i++) {
+            int value = (int) (Math.random() * 15);
+            char data = (char) value;
+            random[i] = (byte) data;
+        }
+        return random;
+    }
+
+
+    /**
+     * 非对称模式
+     */
+    public enum AsymmetricModel {
+
+        NONE("NONE");
+
+        private String name;
+
+        private AsymmetricModel(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * 非对称填充
+     */
+    public enum AsymmetricPadding {
+
+        NoPadding("NoPadding");
+
+        private String name;
+
+        private AsymmetricPadding(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * 生成RSA公私钥对
+     *
+     * @param modulus
+     * @param exponent
+     * @return
+     */
+    public static KeyPair generateRSAKeyPair(int modulus, int exponent) {
+        if (!(modulus == 1024 || modulus == 2048 || modulus == 3072 || modulus == 4096)) {
+            throw new IllegalArgumentException("RSA modulus error");
+        }
+        KeyPair keyPair = null;
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            BigInteger publicExponent = new BigInteger(exponent + "", 10);
+            RSAKeyGenParameterSpec parameterSpec = new RSAKeyGenParameterSpec(modulus, publicExponent);
+            generator.initialize(parameterSpec);
+            keyPair = generator.generateKeyPair();
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        }
+        return keyPair;
+    }
+
+    /**
+     * 加密
+     * @param model
+     * @param padding
+     * @param publicKey
+     * @param data
+     * @return
+     */
+    public static byte[] encrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPublicKey publicKey,byte[] data){
+        try {
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            return cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+                | BadPaddingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 解密
+     * @param model
+     * @param padding
+     * @param publicKey
+     * @param data
+     * @return
+     */
+    public static byte[] decrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPublicKey publicKey,byte[] data){
+        try {
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
+            cipher.init(Cipher.DECRYPT_MODE, publicKey);
+            return cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+                | BadPaddingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 加密
+     * @param model
+     * @param padding
+     * @param privateKey
+     * @param data
+     * @return
+     */
+    public static byte[] encrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPrivateCrtKey privateKey,byte[] data){
+        try {
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
+            cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+            return cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+                | BadPaddingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 解密
+     * @param model
+     * @param padding
+     * @param privateKey
+     * @param data
+     * @return
+     */
+    public static byte[] decrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPrivateCrtKey privateKey,byte[] data){
+        try {
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            return cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+                | BadPaddingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * ECC曲线
+     */
+    public enum ECCCurve {
+
+        secp224r1("secp224r1"), prime256v1("prime256v1"), secp384r1("secp384r1"), secp521r1("secp521r1");
+
+        private String name;
+
+        private ECCCurve(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * 生成ECC公私钥对
+     *
+     * @param keyLength
+     * @return
+     */
+    public static KeyPair generateECCKeyPair(ECCCurve eccCurve) {
+        KeyPair keyPair = null;
+        try {
+            ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec(eccCurve.getName());
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("ECDH");
+            generator.initialize(parameterSpec);
+            keyPair = generator.generateKeyPair();
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        }
+        return keyPair;
+    }
+
 }

@@ -433,12 +433,12 @@ public class TR31 {
         byte[] encKey = null;
         if (keyBlockVersion == KeyBlockVersion.B) {
             encKey = desDeriveEncKey(bpk);
-            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.AlgorithmModel.CBC,
-                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, keyBlock);
+            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, mac, keyBlock);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             encKey = aesDeriveEncKey(bpk);
-            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.AlgorithmModel.CBC,
-                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, keyBlock);
+            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, mac, keyBlock);
         }
         PrintfUtil.d("EncKey", Bytes.toHexString(encKey));
         PrintfUtil.d("Out", Bytes.toHexString(out));
@@ -571,12 +571,12 @@ public class TR31 {
         byte[] encKey = null;
         if (keyBlockVersion == KeyBlockVersion.B) {
             encKey = desDeriveEncKey(bpk);
-            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.AlgorithmModel.CBC,
-                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, out);
+            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, mac, out);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             encKey = aesDeriveEncKey(bpk);
-            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.AlgorithmModel.CBC,
-                    AlgUtil.SymmetryPadding.ZeroPadding, encKey, mac, out);
+            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, mac, out);
         }
         PrintfUtil.d("EncKey", Bytes.toHexString(encKey));
         PrintfUtil.d("KeyBlock", Bytes.toHexString(keyBlock));

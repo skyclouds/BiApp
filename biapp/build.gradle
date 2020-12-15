@@ -55,14 +55,14 @@ dependencies {
     //引入libs下的所有jar
     api fileTree(include: ['*.jar'], dir: 'libs')
     api 'androidx.appcompat:appcompat:1.2.0'
-    testImplementation 'junit:junit:4.13'
+    testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     api 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     //Gson
     api 'com.google.code.gson:gson:2.8.6'
     //RxPreferences
-    api 'com.f2prateek.rx.preferences2:rx-preferences:2.0.0'
+    api 'com.f2prateek.rx.preferences2:rx-preferences:2.0.1'
     //RxJava
     api 'io.reactivex.rxjava2:rxandroid:2.1.1'
     api 'io.reactivex.rxjava2:rxjava:2.2.19'
@@ -70,7 +70,7 @@ dependencies {
     //timber
     api 'com.jakewharton.timber:timber:4.7.1'
     //ConstraintLayout
-    api 'com.android.support.constraint:constraint-layout:2.0.2'
+    api 'com.android.support.constraint:constraint-layout:2.0.4'
     //BindingCollectionAdapter
     api 'me.tatarka.bindingcollectionadapter2:bindingcollectionadapter:4.0.0'
     api 'me.tatarka.bindingcollectionadapter2:bindingcollectionadapter-recyclerview:4.0.0'
@@ -89,7 +89,7 @@ dependencies {
 //    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.6.3'
 //    debugImplementation 'com.squareup.leakcanary:leakcanary-support-fragment:1.6.3'
     // AndroidAsync
-    api 'com.koushikdutta.async:androidasync:3.0.9'
+    api 'com.koushikdutta.async:androidasync:3.1.0'
     //Retrofit
     api 'com.squareup.retrofit2:retrofit:2.9.0'
     api 'com.squareup.retrofit2:converter-gson:2.9.0'

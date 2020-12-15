@@ -506,7 +506,7 @@ public class CertUtil {
      */
     public static byte[] RSAPublicKey2Hex(RSAPublicKey publicKey) {
         byte[] hex=Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16)),Bytes.fromHexString(publicKey.getPublicExponent().toString(16)));
-        return Bytes.concat(Bytes.fromInt(hex.length, 4, Bytes.ENDIAN.LITTLE_ENDIAN),hex);
+        return Bytes.concat(Bytes.fromInt(publicKey.getModulus().bitLength(), 4,Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
 
     /**
@@ -560,7 +560,7 @@ public class CertUtil {
                 Bytes.fromHexString(privateKey.getPrimeExponentP().toString(16)),
                 Bytes.fromHexString(privateKey.getPrimeExponentQ().toString(16)),
                 Bytes.fromHexString(privateKey.getCrtCoefficient().toString(16)));
-        return Bytes.concat(Bytes.fromInt(hex.length, 4, Bytes.ENDIAN.LITTLE_ENDIAN),hex);
+        return Bytes.concat(Bytes.fromInt(privateKey.getModulus().bitLength(), 4,Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
 
     /**

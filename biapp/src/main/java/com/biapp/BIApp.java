@@ -8,6 +8,7 @@ import com.biapp.lib.BuildConfig;
 import com.biapp.messenger.RxBusDefaults;
 import com.biapp.room.AppDatabase;
 import com.biapp.util.PrintfUtil;
+
 import io.reactivex.plugins.RxJavaPlugins;
 import timber.log.Timber;
 

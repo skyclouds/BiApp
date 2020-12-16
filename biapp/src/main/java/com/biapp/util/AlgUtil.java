@@ -791,48 +791,6 @@ public class AlgUtil {
      * 解密
      * @param model
      * @param padding
-     * @param publicKey
-     * @param data
-     * @return
-     */
-    public static byte[] decrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPublicKey publicKey,byte[] data){
-        try {
-            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
-            cipher.init(Cipher.DECRYPT_MODE, publicKey);
-            return cipher.doFinal(data);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
-                | BadPaddingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 加密
-     * @param model
-     * @param padding
-     * @param privateKey
-     * @param data
-     * @return
-     */
-    public static byte[] encrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPrivateCrtKey privateKey,byte[] data){
-        try {
-            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
-            cipher.init(Cipher.ENCRYPT_MODE, privateKey);
-            return cipher.doFinal(data);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
-                | BadPaddingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 解密
-     * @param model
-     * @param padding
      * @param privateKey
      * @param data
      * @return

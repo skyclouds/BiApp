@@ -9,12 +9,13 @@ import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Principal;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -23,8 +24,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import aura.data.Bytes;
 
@@ -33,8 +35,11 @@ import aura.data.Bytes;
  */
 public class CertUtil {
 
-
-    public static class X509RSACert{
+    /***
+     * X.509证书结构 X.509证书结构长度+证书长度+证书信息(1 证书版本信息 2 证书序列号 3 签名算法描述 4 证书颁发者信息 5 有效期信息 6
+     * 主题信息 7 公钥信息 8 扩展信息)+签名算法信息+签名信息
+     */
+    public static class X509RSACert {
 
         /**
          * 扩展域标签
@@ -43,43 +48,43 @@ public class CertUtil {
             /**
              * 密钥用途
              */
-            KEY_USAGE(new byte[] { 0x55, 0x1D, 0x0F }),
+            KEY_USAGE(new byte[]{0x55, 0x1D, 0x0F}),
             /**
              * 签名方式
              */
-            SIGN_MODE(new byte[] { 0x55, 0x1D, 0x67 }),
+            SIGN_MODE(new byte[]{0x55, 0x1D, 0x67}),
             /**
              * 原始文件HASH值
              */
-            FILE_HASH(new byte[] { 0x55, 0x1D, (byte) 0xA0 }),
+            FILE_HASH(new byte[]{0x55, 0x1D, (byte) 0xA0}),
             /**
              * 证书文件名
              */
-            CRT_NAME(new byte[] { 0x55, 0x1D, 0x61 }),
+            CRT_NAME(new byte[]{0x55, 0x1D, 0x61}),
             /**
              * 上级证书ID
              */
-            UPPER_CRT_ID(new byte[] { 0x55, 0x1D, 0x62 }),
+            UPPER_CRT_ID(new byte[]{0x55, 0x1D, 0x62}),
             /**
              * 组号
              */
-            GROUP_ID(new byte[] { 0x55, 0x1D, 0x63 }),
+            GROUP_ID(new byte[]{0x55, 0x1D, 0x63}),
             /**
              * 组内号
              */
-            GROUP_INSIDE_ID(new byte[] { 0x55, 0x1D, 0x64 }),
+            GROUP_INSIDE_ID(new byte[]{0x55, 0x1D, 0x64}),
             /**
              * 证书级别
              */
-            CERT_LEVEL(new byte[] { 0x55, 0x1D, 0x65 }),
+            CERT_LEVEL(new byte[]{0x55, 0x1D, 0x65}),
             /**
              * 是否可替换联迪默认根证书
              */
-            IF_REPLACE_DF_CRT(new byte[] { 0x55, 0x1D, 0x66 }),
+            IF_REPLACE_DF_CRT(new byte[]{0x55, 0x1D, 0x66}),
             /**
              * 证书版本
              */
-            CERT_VER(new byte[] { 0x55, 0x1D, 0x68 });
+            CERT_VER(new byte[]{0x55, 0x1D, 0x68});
 
             private byte[] value;
 
@@ -146,12 +151,17 @@ public class CertUtil {
         private byte[] signature;
 
         /**
+         * X509数据项信息
+         */
+        private List<TLV> x509Items;
+
+        /**
          * 扩展信息
          */
         private List<TLV> extend;
 
 
-        public X509RSACert(byte[] data){
+        public X509RSACert(byte[] data) {
             parse(data);
         }
 
@@ -227,6 +237,14 @@ public class CertUtil {
             this.publicKey = publicKey;
         }
 
+        public List<TLV> getX509Items() {
+            return x509Items;
+        }
+
+        public void setX509Items(List<TLV> x509Items) {
+            this.x509Items = x509Items;
+        }
+
         public List<TLV> getExtend() {
             return extend;
         }
@@ -249,7 +267,7 @@ public class CertUtil {
             /**
              * 0X06表示自定义标签信息 T 0x06 L 03
              */
-            byte[] flag = new byte[] { 0x06, 0x03 };
+            byte[] flag = new byte[]{0x06, 0x03};
             for (TLV tlv : extend) {
                 if (Bytes.equals(tlv.getValue(), Bytes.concat(flag, tag.value), 0, flag.length + tag.value.length)) {
                     value = parseExtendValue(Bytes.subBytes(tlv.getValue(), flag.length + tag.value.length));
@@ -285,36 +303,49 @@ public class CertUtil {
             return value;
         }
 
-        private void parse(byte[] data){
-            X509Certificate cert=CertUtil.getCertificate(data);
-            if(cert!=null){
-                this.data=data;
-                this.version=cert.getVersion();
-                this.serialNumber=cert.getSerialNumber().toString();
+        private void parse(byte[] data) {
+            X509Certificate cert = CertUtil.getCertificate(data);
+            if (cert != null) {
+                this.data = data;
+                this.version = cert.getVersion();
+                this.serialNumber = cert.getSerialNumber().toString();
                 //this.signAlgName=cert.getSigAlgName();
-                this.issuerName="";
-                for(String value:cert.getIssuerDN().getName().split(",")){
-                    if(value.startsWith("CN=")){
-                        issuerName=value.substring(value.indexOf("CN=")+"CN=".length());
+                this.issuerName = "";
+                for (String value : cert.getIssuerDN().getName().split(",")) {
+                    if (value.trim().startsWith("CN=")) {
+                        issuerName = value.substring(value.indexOf("CN=") + "CN=".length());
                     }
                 }
-                this.startTime=cert.getNotBefore().getTime();
+                this.startTime = cert.getNotBefore().getTime();
                 this.endTime = cert.getNotAfter().getTime();
-                this.subjectName="";
-                for(String value:cert.getSubjectDN().getName().split(",")){
-                    if(value.startsWith("CN=")){
-                        subjectName=value.substring(value.indexOf("CN=")+"CN=".length());
+                this.subjectName = "";
+                for (String value : cert.getSubjectDN().getName().split(",")) {
+                    if (value.trim().startsWith("CN=")) {
+                        subjectName = value.substring(value.indexOf("CN=") + "CN=".length());
                     }
                 }
-                this.publicKey=(RSAPublicKey)cert.getPublicKey();
-                this.signature=cert.getSignature();
+                this.publicKey = (RSAPublicKey) cert.getPublicKey();
+                this.signature = cert.getSignature();
 
-                List<TLV> tlvs=TLVUtil.parseDER(data);
-                if(tlvs!=null&&!tlvs.isEmpty()){
-                    if(tlvs.get(0).getChildren()!=null&&!tlvs.get(0).getChildren().isEmpty()){
-                        TLV certInfos=tlvs.get(0).getChildren().get(0);
-                        if(certInfos.getChildren()!=null&&!certInfos.getChildren().isEmpty()&&certInfos.getChildren().size()==8){
+                List<TLV> tlvs = TLVUtil.parseDER(data);
+                if (tlvs != null && !tlvs.isEmpty()) {
+                    if (tlvs.get(0).getChildren() != null && !tlvs.get(0).getChildren().isEmpty()) {
+                        TLV certInfos = tlvs.get(0).getChildren().get(0);
+                        if (certInfos.getChildren() != null && !certInfos.getChildren().isEmpty() && certInfos.getChildren().size() == 8) {
                             this.extend = certInfos.getChildren().get(7).getChildren().get(0).getChildren();
+                            x509Items=new ArrayList<>();
+                            x509Items.add(certInfos.getChildren().get(0));
+                            x509Items.add(certInfos.getChildren().get(1));
+                            x509Items.add(certInfos.getChildren().get(2));
+                            x509Items.add(certInfos.getChildren().get(3));
+                            x509Items.add(certInfos.getChildren().get(4));
+                            x509Items.add(certInfos.getChildren().get(5));
+                            x509Items.add(certInfos.getChildren().get(6));
+                            x509Items.add(certInfos.getChildren().get(7));
+                            if(tlvs.size()==3){
+                                x509Items.add(tlvs.get(0).getChildren().get(1));
+                                x509Items.add(tlvs.get(0).getChildren().get(2));
+                            }
                         }
                     }
                 }
@@ -360,10 +391,11 @@ public class CertUtil {
 
     /**
      * 获得X509RSACert
+     *
      * @param certData
      * @return
      */
-    public static X509RSACert getX509RSACert(byte[] certData){
+    public static X509RSACert getX509RSACert(byte[] certData) {
         return new X509RSACert(certData);
     }
 
@@ -501,12 +533,13 @@ public class CertUtil {
 
     /**
      * RSAPublicKey类对象解析成6进制数据
+     *
      * @param publicKey
      * @return
      */
     public static byte[] RSAPublicKey2Hex(RSAPublicKey publicKey) {
-        byte[] hex=Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16)),Bytes.fromHexString(publicKey.getPublicExponent().toString(16)));
-        return Bytes.concat(Bytes.fromInt(publicKey.getModulus().bitLength(), 4,Bytes.ENDIAN.LITTLE_ENDIAN), hex);
+        byte[] hex = Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16)), Bytes.fromHexString(publicKey.getPublicExponent().toString(16)));
+        return Bytes.concat(Bytes.fromInt(publicKey.getModulus().bitLength(), 4, Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
 
     /**
@@ -548,11 +581,12 @@ public class CertUtil {
 
     /**
      * RSAPrivateCrtKey类对象解析成6进制数据
+     *
      * @param privateKey
      * @return
      */
     public static byte[] RSAPrivateCrtKey2Hex(RSAPrivateCrtKey privateKey) {
-        byte[] hex=Bytes.concat(Bytes.fromHexString(privateKey.getModulus().toString(16)),
+        byte[] hex = Bytes.concat(Bytes.fromHexString(privateKey.getModulus().toString(16)),
                 Bytes.fromHexString(privateKey.getPublicExponent().toString(16)),
                 Bytes.fromHexString(privateKey.getPrivateExponent().toString(16)),
                 Bytes.fromHexString(privateKey.getPrimeP().toString(16)),
@@ -560,7 +594,7 @@ public class CertUtil {
                 Bytes.fromHexString(privateKey.getPrimeExponentP().toString(16)),
                 Bytes.fromHexString(privateKey.getPrimeExponentQ().toString(16)),
                 Bytes.fromHexString(privateKey.getCrtCoefficient().toString(16)));
-        return Bytes.concat(Bytes.fromInt(privateKey.getModulus().bitLength(), 4,Bytes.ENDIAN.LITTLE_ENDIAN), hex);
+        return Bytes.concat(Bytes.fromInt(privateKey.getModulus().bitLength(), 4, Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
 
     /**
@@ -854,89 +888,82 @@ public class CertUtil {
         return verify;
     }
 
+
     /**
      * 验证证书链
      *
-     * @param rootCertificate
-     * @param collectionX509CertificateChain
+     * @param root
+     * @param certs
      * @return
      */
-    public static boolean verifyChain(X509Certificate rootCertificate,
-                                      ArrayList<X509Certificate> collectionX509CertificateChain) {
-        // Sort certificate chain
-        ArrayList<X509Certificate> tempCertificateChain = new ArrayList<>();
-        tempCertificateChain.add(rootCertificate);
-        while (tempCertificateChain.size() <= collectionX509CertificateChain.size()) {
-
-            X509Certificate subCert = null;
-            for (X509Certificate cert : collectionX509CertificateChain) {
-                if (tempCertificateChain.get(tempCertificateChain.size() - 1).getSubjectDN()
-                        .equals(cert.getIssuerDN())) {
-                    subCert = cert;
-                }
-            }
-            if (subCert != null) {
-                tempCertificateChain.add(subCert);
-            } else {
-                return false;
-            }
-        }
-        tempCertificateChain.remove(rootCertificate);
-
-        // convert the certificate chain to an array
-        X509Certificate[] arX509certificate = new X509Certificate[tempCertificateChain.size()];
-        tempCertificateChain.toArray(arX509certificate);
-
-        // From top to bottom along the certificate chain, verify that the owner of the
-        // certificate is the issuer of the next certificate
-        Principal principalLast = null;
-        for (int i = 0; i < arX509certificate.length; i++) {
-            // Traverse ArX509Certificate
-            X509Certificate x509Certificate = arX509certificate[i];
-            // get publisher id
-            Principal principalIssuer = x509Certificate.getIssuerDN();
-            // obtain the subject id of the certificate
-            Principal principalSubject = x509Certificate.getSubjectDN();
-
-            if (principalLast != null) {
-                // The issuer of the verification certificate is the owner of the previous
-                // certificate
-                if (!principalIssuer.equals(principalLast)) {
-                    return false;
-                }
-
-                try {
-                    // get the public key of the last certificate
-                    PublicKey publickey = arX509certificate[i - 1].getPublicKey();
-                    // Verify that the certificate has been signed with the private key
-                    // corresponding to the specified public key
-                    arX509certificate[i].verify(publickey);
-                } catch (Exception e) {
-                    return false;
-                }
-            }
-            principalLast = principalSubject;
-
-        }
-
-        // Prove that the first certificate in the certificate chain is issued by a CA
-        // that the user trusts
+    public static boolean verifyChain(X509Certificate root, X509Certificate... certs) {
         try {
-            PublicKey publickey = rootCertificate.getPublicKey();
-            arX509certificate[0].verify(publickey);
-        } catch (Exception e) {
-            return false;
-        }
-
-        // Verify that each certificate in the certificate chain is within the validity
-        // period
-        Date date = new Date();
-        for (int i = 0; i < arX509certificate.length; i++) {
-            try {
-                arX509certificate[i].checkValidity(date);
-            } catch (Exception e) {
-                return false;
+            // 颁发者
+            Set<String> issuers = new HashSet<String>();
+            // 默认添加Root
+            issuers.add(root.getSubjectDN().getName().trim());
+            // 所有者
+            Set<String> subjects = new HashSet<String>();
+            // 校验日期有效期
+            root.checkValidity();
+            for (X509Certificate cert : certs) {
+                cert.checkValidity();
+                issuers.add(cert.getIssuerDN().getName().trim());
+                subjects.add(cert.getSubjectDN().getName().trim());
             }
+            // 叶子证书（最后节点的工作证书）
+            List<X509Certificate> leafCerts = new ArrayList<X509Certificate>();
+            for (X509Certificate cert : certs) {
+                if (!issuers.contains(cert.getSubjectDN().getName().trim())) {
+                    leafCerts.add(cert);
+                }
+            }
+            for (X509Certificate leafCert : leafCerts) {
+                if (!verifyChain(root, leafCert, certs)) {
+                    return false;
+                }
+            }
+        } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    /**
+     * 验证证书链
+     *
+     * @param root
+     * @param leafCert
+     * @param certs
+     * @return
+     */
+    private static boolean verifyChain(X509Certificate root, X509Certificate leafCert, X509Certificate... certs) {
+        try {
+            X509Certificate superCert = null;
+            for (X509Certificate cert : certs) {
+                if (leafCert.getIssuerDN().getName().trim().equals(cert.getSubjectDN().getName().trim())) {
+                    superCert = cert;
+                    break;
+                }
+            }
+            if (superCert == null) {
+                if (leafCert.getIssuerDN().getName().trim().equals(root.getSubjectDN().getName().trim())) {
+                    // 用Root证书验证
+                    PublicKey publickey = root.getPublicKey();
+                    leafCert.verify(publickey);
+                } else {
+                    //未找到对应的证书链校验
+                    return false;
+                }
+            } else {
+                // 验证证书链
+                PublicKey publickey = superCert.getPublicKey();
+                leafCert.verify(publickey);
+                return verifyChain(root, superCert, certs);
+            }
+        } catch (InvalidKeyException | CertificateException | NoSuchAlgorithmException | NoSuchProviderException
+                | SignatureException e) {
+            e.printStackTrace();
         }
         return true;
     }

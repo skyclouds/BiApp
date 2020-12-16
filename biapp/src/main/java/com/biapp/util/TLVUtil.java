@@ -16,11 +16,13 @@ public class TLVUtil {
     public static class TLV {
         private byte[] tag;
         private int length;
+        private byte[] lengthData;
         private byte[] value;
         private List<TLV> children = new ArrayList<>();
 
-        public TLV(byte[] tag, int length, byte[] value) {
+        public TLV(byte[] tag, byte[] lengthData, int length, byte[] value) {
             this.tag = tag;
+            this.lengthData = lengthData;
             this.length = length;
             this.value = value;
         }
@@ -60,6 +62,15 @@ public class TLVUtil {
         public boolean hasChildren() {
             return !this.children.isEmpty();
         }
+
+        @Override
+        public String toString() {
+            return Bytes.toHexString(Bytes.concat(tag, lengthData, value));
+        }
+
+        public byte[] getBytes(){
+            return Bytes.concat(tag, lengthData, value);
+        }
     }
 
     /**
@@ -77,9 +88,11 @@ public class TLVUtil {
             } else if (Bytes.equals(tag, new byte[]{0x30}) || Bytes.equals(tag, new byte[]{0x02})
                     || Bytes.equals(tag, new byte[]{0x03}) || Bytes.equals(tag, new byte[]{0x04})
                     || Bytes.equals(tag, new byte[]{(byte) 0xA0}) || Bytes.equals(tag, new byte[]{(byte) 0xA3})) {
-                int length = tlvData[i++] & 0xFF;
+                byte[] lengthData = new byte[]{tlvData[i++]};
+                int length = lengthData[0] & 0xFF;
                 if (length > 0x80) {
                     int lengthLen = length & 0x7F;
+                    lengthData = Bytes.concat(lengthData, Bytes.subBytes(tlvData, i, lengthLen));
                     length = Bytes.toInt(Bytes.subBytes(tlvData, i, lengthLen));
                     i += lengthLen;
                 }
@@ -88,7 +101,7 @@ public class TLVUtil {
                     throw new IllegalArgumentException("parse DER error");
                 }
                 i += length;
-                TLV tlv = new TLV(tag, length, value);
+                TLV tlv = new TLV(tag, lengthData, length, value);
                 if (Bytes.equals(tag, new byte[]{0x30}) || Bytes.equals(tag, new byte[]{0x03})
                         || Bytes.equals(tag, new byte[]{(byte) 0x04})
                         || Bytes.equals(tag, new byte[]{(byte) 0xA3})) {

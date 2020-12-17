@@ -126,6 +126,15 @@ public class AlgTest {
     }
 
     @Test
+    public void eccTest() {
+        AlgUtil.generateECCKeyPair(AlgUtil.ECCCurve.secp256r1);
+        AlgUtil.generateECCKeyPair(AlgUtil.ECCCurve.secp384r1);
+        AlgUtil.generateECCKeyPair(AlgUtil.ECCCurve.brainpoolp256r1);
+        AlgUtil.generateECCKeyPair(AlgUtil.ECCCurve.brainpoolp384r1);
+        AlgUtil.generateECCKeyPair(AlgUtil.ECCCurve.brainpoolp512r1);
+    }
+
+    @Test
     public void ikTest() {
         byte[] ck1 = Bytes.fromHexString("11111111111111111111111111111111");
         byte[] ksn1 = Bytes.fromHexString("FFFFFF910626A4E00000");

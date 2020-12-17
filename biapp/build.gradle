@@ -96,6 +96,9 @@ dependencies {
     api 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
     //Xml
     api 'jaxen:jaxen:1.2.0'
-    //BouncyCastle
-    api "org.bouncycastle:bcprov-jdk15on:1.65.01"
+    //Spongy Castle
+    api 'com.madgag.spongycastle:core:1.58.0.0'
+    api 'com.madgag.spongycastle:prov:1.58.0.0'
+    api 'com.madgag.spongycastle:pkix:1.54.0.0'
+    api 'com.madgag.spongycastle:pg:1.54.0.0'
 }

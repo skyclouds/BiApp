@@ -1,16 +1,16 @@
 package com.biapp.util;
 
-import org.bouncycastle.crypto.BlockCipher;
-import org.bouncycastle.crypto.CipherParameters;
-import org.bouncycastle.crypto.engines.AESEngine;
-import org.bouncycastle.crypto.engines.DESEngine;
-import org.bouncycastle.crypto.engines.DESedeEngine;
-import org.bouncycastle.crypto.macs.CMac;
-import org.bouncycastle.crypto.macs.ISO9797Alg3Mac;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.spongycastle.crypto.BlockCipher;
+import org.spongycastle.crypto.CipherParameters;
+import org.spongycastle.crypto.engines.AESEngine;
+import org.spongycastle.crypto.engines.DESEngine;
+import org.spongycastle.crypto.engines.DESedeEngine;
+import org.spongycastle.crypto.macs.CMac;
+import org.spongycastle.crypto.macs.ISO9797Alg3Mac;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.jce.ECNamedCurveTable;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
+import org.spongycastle.jce.spec.ECNamedCurveParameterSpec;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -46,7 +46,7 @@ public class AlgUtil {
     private static final Provider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
     static {
-        Security.addProvider(BOUNCY_CASTLE_PROVIDER);
+        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
     }
 
     /**
@@ -299,7 +299,7 @@ public class AlgUtil {
      */
     public static byte[] ISO9797_1Padding_Method1(int keyBlockSize, byte[] data) {
         if (data.length % keyBlockSize != 0) {
-            byte[] padding = new byte[keyBlockSize-data.length % keyBlockSize];
+            byte[] padding = new byte[keyBlockSize - data.length % keyBlockSize];
             Arrays.fill(padding, (byte) 0x00);
             return Bytes.concat(data, padding);
         } else {
@@ -310,7 +310,7 @@ public class AlgUtil {
     /**
      * MAC算法填充
      */
-    public enum MacAlgorithmPadding{
+    public enum MacAlgorithmPadding {
         Method1, Method2, Method3;
     }
 
@@ -324,7 +324,7 @@ public class AlgUtil {
     public static byte[] ISO9797_1Padding_Method2(int keyBlockSize, byte[] data) {
         byte[] padding;
         if (data.length % keyBlockSize != 0) {
-            padding = new byte[keyBlockSize-data.length % keyBlockSize];
+            padding = new byte[keyBlockSize - data.length % keyBlockSize];
         } else {
             padding = new byte[keyBlockSize];
         }
@@ -342,9 +342,9 @@ public class AlgUtil {
      */
     public static byte[] ISO9797_1Padding_Method3(int keyBlockSize, byte[] data) {
         int dataBitSize = data.length * 8;
-        byte[] paddingStart = Bytes.fromHexString(FormatUtil.addHead('0', keyBlockSize*2, Integer.toHexString(dataBitSize)));
+        byte[] paddingStart = Bytes.fromHexString(FormatUtil.addHead('0', keyBlockSize * 2, Integer.toHexString(dataBitSize)));
         if (data.length % keyBlockSize != 0) {
-            byte[] paddingEnd = new byte[keyBlockSize-data.length % keyBlockSize];
+            byte[] paddingEnd = new byte[keyBlockSize - data.length % keyBlockSize];
             Arrays.fill(paddingEnd, (byte) 0x00);
             return Bytes.concat(paddingStart, data, paddingEnd);
         } else {
@@ -355,29 +355,30 @@ public class AlgUtil {
 
     /**
      * ISO9797-1 MAC Algorithm1
+     *
      * @param key
      * @param data
      * @param padding
      * @return
      */
-    public static byte[] ISO9797_1_MACAlgorithm1(byte[] key,byte[] data,MacAlgorithmPadding padding){
-        if(padding==MacAlgorithmPadding.Method1){
-            data =ISO9797_1Padding_Method1(8,data);
-        }else if(padding==MacAlgorithmPadding.Method2){
-            data =ISO9797_1Padding_Method2(8,data);
-        }else if(padding==MacAlgorithmPadding.Method3){
-            data =ISO9797_1Padding_Method3(8,data);
+    public static byte[] ISO9797_1_MACAlgorithm1(byte[] key, byte[] data, MacAlgorithmPadding padding) {
+        if (padding == MacAlgorithmPadding.Method1) {
+            data = ISO9797_1Padding_Method1(8, data);
+        } else if (padding == MacAlgorithmPadding.Method2) {
+            data = ISO9797_1Padding_Method2(8, data);
+        } else if (padding == MacAlgorithmPadding.Method3) {
+            data = ISO9797_1Padding_Method3(8, data);
         }
-        byte[] iv=new byte[8];
-        byte[] h=null;
-        byte[] d=null;
-        for(int round=0;round<data.length/8;round++){
-            d=Bytes.subBytes(data, round*8, 8);
-            if(round>0){
-                d=Bytes.xor(d, h);
+        byte[] iv = new byte[8];
+        byte[] h = null;
+        byte[] d = null;
+        for (int round = 0; round < data.length / 8; round++) {
+            d = Bytes.subBytes(data, round * 8, 8);
+            if (round > 0) {
+                d = Bytes.xor(d, h);
                 //PrintfUtil.d("D"+(round+1)+"+"+"H"+(round), Bytes.toHexString(d));
             }
-            h=encrypt(SymmetryAlgorithm.DES,SymmetryModel.CBC,SymmetryPadding.NoPadding, key,iv,d);
+            h = encrypt(SymmetryAlgorithm.DES, SymmetryModel.CBC, SymmetryPadding.NoPadding, key, iv, d);
             //PrintfUtil.d("H"+(round+1), Bytes.toHexString(h));
         }
         return h;
@@ -385,12 +386,13 @@ public class AlgUtil {
 
     /**
      * ISO9797-1 MAC Algorithm3
+     *
      * @param key
      * @param data
      * @param padding
      * @return
      */
-    public static byte[] ISO9797_1_MACAlgorithm3(byte[] key,byte[] data,MacAlgorithmPadding padding){
+    public static byte[] ISO9797_1_MACAlgorithm3(byte[] key, byte[] data, MacAlgorithmPadding padding) {
         byte[] out = new byte[8];
         if (key.length != 16) {
             throw new IllegalArgumentException("key length must be 16 bytes");
@@ -403,7 +405,7 @@ public class AlgUtil {
             data = ISO9797_1Padding_Method3(8, data);
         }
         BlockCipher cipher = new DESEngine();
-        org.bouncycastle.crypto.Mac mac = new ISO9797Alg3Mac(cipher, 64);
+        org.spongycastle.crypto.Mac mac = new ISO9797Alg3Mac(cipher, 64);
         KeyParameter keyParameter = new KeyParameter(key);
         mac.init(keyParameter);
         mac.update(data, 0, data.length);
@@ -419,7 +421,7 @@ public class AlgUtil {
      * @param padding
      * @return
      */
-    public static byte[] ISO16609_1_MACAlgorithm1(byte[] key, byte[] data, MacAlgorithmPadding padding){
+    public static byte[] ISO16609_1_MACAlgorithm1(byte[] key, byte[] data, MacAlgorithmPadding padding) {
         if (padding == MacAlgorithmPadding.Method1) {
             data = ISO9797_1Padding_Method1(8, data);
         } else if (padding == MacAlgorithmPadding.Method2) {
@@ -497,7 +499,7 @@ public class AlgUtil {
     public static byte[] tdesCMAC(byte[] key, byte[] data) {
         byte[] cmac = new byte[8];
         BlockCipher cipher = new DESedeEngine();
-        org.bouncycastle.crypto.Mac mac = new CMac(cipher, 64);
+        org.spongycastle.crypto.Mac mac = new CMac(cipher, 64);
         CipherParameters params = new KeyParameter(key);
         mac.init(params);
         mac.update(data, 0, data.length);
@@ -515,7 +517,7 @@ public class AlgUtil {
     public static byte[] aesCMAC(byte[] key, byte[] data) {
         byte[] cmac = new byte[16];
         BlockCipher cipher = new AESEngine();
-        org.bouncycastle.crypto.Mac mac = new CMac(cipher, 128);
+        org.spongycastle.crypto.Mac mac = new CMac(cipher, 128);
         CipherParameters params = new KeyParameter(key);
         mac.init(params);
         mac.update(data, 0, data.length);
@@ -539,8 +541,8 @@ public class AlgUtil {
             throw new IllegalArgumentException("ksn length error");
         }
         byte[] ik;
-        byte[] makeEBdk = new byte[] { (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00,
-                (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00 };
+        byte[] makeEBdk = new byte[]{(byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00,
+                (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00};
         byte[] ksnTmp = Bytes.subBytes(ksn, 0, 8);
         // 根据算法需要把原来的80个bit的KSN后21bit清零
         ksnTmp[7] &= 0xE0;
@@ -576,7 +578,7 @@ public class AlgUtil {
         // set Key Block Counter.1 for first block, 2 for second, etc.
         derivData[1] = 0x01;
         // set Key Usage Indicator
-        byte[] keyUsage = new byte[] { (byte) 0x80, 0x01 };
+        byte[] keyUsage = new byte[]{(byte) 0x80, 0x01};
         derivData[2] = keyUsage[0];
         derivData[3] = keyUsage[1];
         byte[] algIndi = new byte[2];
@@ -766,20 +768,20 @@ public class AlgUtil {
 
     /**
      * 加密
+     *
      * @param model
      * @param padding
      * @param publicKey
      * @param data
      * @return
      */
-    public static byte[] encrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPublicKey publicKey,byte[] data){
+    public static byte[] encrypt(AsymmetricModel model, AsymmetricPadding padding, RSAPublicKey publicKey, byte[] data) {
         try {
             Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return null;
@@ -787,20 +789,20 @@ public class AlgUtil {
 
     /**
      * 解密
+     *
      * @param model
      * @param padding
      * @param privateKey
      * @param data
      * @return
      */
-    public static byte[] decrypt(AsymmetricModel model,AsymmetricPadding padding,RSAPrivateCrtKey privateKey,byte[] data){
+    public static byte[] decrypt(AsymmetricModel model, AsymmetricPadding padding, RSAPrivateCrtKey privateKey, byte[] data) {
         try {
             Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return null;
@@ -811,7 +813,8 @@ public class AlgUtil {
      */
     public enum ECCCurve {
 
-        secp224r1("secp224r1"), prime256v1("prime256v1"), secp384r1("secp384r1"), secp521r1("secp521r1");
+        secp224r1("secp224r1"), secp256r1("secp256r1"), secp384r1("secp384r1"), secp521r1("secp521r1"),
+        brainpoolp256r1("brainpoolp256r1"), brainpoolp384r1("brainpoolp384r1"), brainpoolp512r1("brainpoolp512r1");
 
         private String name;
 
@@ -836,7 +839,7 @@ public class AlgUtil {
     /**
      * 生成ECC公私钥对
      *
-     * @param keyLength
+     * @param eccCurve
      * @return
      */
     public static KeyPair generateECCKeyPair(ECCCurve eccCurve) {

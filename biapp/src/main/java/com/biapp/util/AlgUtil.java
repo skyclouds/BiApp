@@ -2,11 +2,14 @@ package com.biapp.util;
 
 import org.spongycastle.crypto.BlockCipher;
 import org.spongycastle.crypto.CipherParameters;
+import org.spongycastle.crypto.Digest;
 import org.spongycastle.crypto.engines.AESEngine;
 import org.spongycastle.crypto.engines.DESEngine;
 import org.spongycastle.crypto.engines.DESedeEngine;
+import org.spongycastle.crypto.generators.HKDFBytesGenerator;
 import org.spongycastle.crypto.macs.CMac;
 import org.spongycastle.crypto.macs.ISO9797Alg3Mac;
+import org.spongycastle.crypto.params.HKDFParameters;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.jce.ECNamedCurveTable;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
@@ -20,16 +23,24 @@ import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.SecureRandom;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.MGF1ParameterSpec;
+import java.security.spec.PSSParameterSpec;
 import java.security.spec.RSAKeyGenParameterSpec;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.Mac;
+import javax.crypto.KeyAgreement;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -233,58 +244,6 @@ public class AlgUtil {
             messageDigest.update(data);
             return messageDigest.digest();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * MAC算法
-     */
-    public enum MACAlgorithm {
-
-        MD5withRSA("MD5withRSA"), SHA1withRSA("SHA1withRSA"), SHA224withRSA("SHA224withRSA"),
-        SHA256withRSA("SHA256withRSA"), SHA384withRSA("SHA384withRSA"), SHA512withRSA("SHA512withRSA"),
-        SHA3_224withRSA("SHA3-224withRSA"), SHA3_256withRSA("SHA3-256withRSA"), SHA3_384withRSA("SHA3-384withRSA"),
-        SHA3_512withRSA("SHA3-512withRSA"), SHA256withSM2("SHA256withSM2"), SM3withSM2("SM3withSM2");
-
-        private String name;
-
-        private MACAlgorithm(final String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-    }
-
-    /**
-     * MAC
-     *
-     * @param algorithm
-     * @param key
-     * @param data
-     * @return
-     */
-    public static byte[] mac(MACAlgorithm algorithm, byte[] key, byte[] data) {
-        try {
-            SecretKeySpec keyspec = new SecretKeySpec(key, algorithm.getName());
-            Mac mac = Mac.getInstance(algorithm.getName());
-            mac.init(keyspec);
-            return mac.doFinal(data);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
             e.printStackTrace();
         }
         return null;
@@ -678,49 +637,18 @@ public class AlgUtil {
      * @return
      */
     public static byte[] getRandom(int len) {
-        byte[] random = new byte[len];
-        for (int i = 0; i < random.length; i++) {
-            int value = (int) (Math.random() * 15);
-            char data = (char) value;
-            random[i] = (byte) data;
-        }
-        return random;
+        return new SecureRandom().generateSeed(len);
     }
 
-
-    /**
-     * 非对称模式
-     */
-    public enum AsymmetricModel {
-
-        NONE("NONE");
-
-        private String name;
-
-        private AsymmetricModel(final String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-    }
 
     /**
      * 非对称填充
      */
     public enum AsymmetricPadding {
 
-        NoPadding("NoPadding");
+        NoPadding("NoPadding"),
+        PKCS1Padding("PKCS1Padding"),
+        OAEPWithSHA256AndMGF1Padding("OAEPWithSHA256AndMGF1Padding");
 
         private String name;
 
@@ -767,18 +695,17 @@ public class AlgUtil {
     }
 
     /**
-     * 加密
+     * RSA公钥计算
      *
-     * @param model
      * @param padding
      * @param publicKey
      * @param data
      * @return
      */
-    public static byte[] encrypt(AsymmetricModel model, AsymmetricPadding padding, RSAPublicKey publicKey, byte[] data) {
+    public static byte[] RSAPublicKeyCalc(AsymmetricPadding padding, RSAPublicKey publicKey, byte[] data) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + "NONE" + "/" + padding.getName());
+            cipher.init(Cipher.PUBLIC_KEY, publicKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException e) {
@@ -788,18 +715,17 @@ public class AlgUtil {
     }
 
     /**
-     * 解密
+     * RSA私钥计算
      *
-     * @param model
      * @param padding
      * @param privateKey
      * @param data
      * @return
      */
-    public static byte[] decrypt(AsymmetricModel model, AsymmetricPadding padding, RSAPrivateCrtKey privateKey, byte[] data) {
+    public static byte[] RSAPrivateKeyCalc(AsymmetricPadding padding, RSAPrivateCrtKey privateKey, byte[] data) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA" + "/" + model.getName() + "/" + padding.getName());
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            Cipher cipher = Cipher.getInstance("RSA" + "/" + "NONE" + "/" + padding.getName());
+            cipher.init(Cipher.PRIVATE_KEY, privateKey);
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException e) {
@@ -809,16 +735,19 @@ public class AlgUtil {
     }
 
     /**
-     * ECC曲线
+     * RSA签名方式
      */
-    public enum ECCCurve {
-
-        secp224r1("secp224r1"), secp256r1("secp256r1"), secp384r1("secp384r1"), secp521r1("secp521r1"),
-        brainpoolp256r1("brainpoolp256r1"), brainpoolp384r1("brainpoolp384r1"), brainpoolp512r1("brainpoolp512r1");
+    public enum RSASignType {
+        SHA256withRSA("SHA256withRSA"),
+        SHA384withRSA("SHA384withRSA"),
+        SHA512withRSA("SHA512withRSA"),
+        SHA256withRSA_PSS("SHA256withRSA/PSS"),
+        SHA384withRSA_PSS("SHA384withRSA/PSS"),
+        SHA512withRSA_PSS("SHA512withRSA/PSS");
 
         private String name;
 
-        private ECCCurve(final String name) {
+        private RSASignType(final String name) {
             this.name = name;
         }
 
@@ -828,6 +757,129 @@ public class AlgUtil {
 
         public void setName(final String name) {
             this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * RSA签名
+     *
+     * @param type
+     * @param privateKey
+     * @param data
+     * @return
+     */
+    public static byte[] RSASign(RSASignType type, RSAPrivateCrtKey privateKey, byte[] data) {
+        try {
+            Signature signature = Signature.getInstance(type.getName());
+            if (type.getName().endsWith("PSS")) {
+                if (type.equals(RSASignType.SHA256withRSA_PSS.getName())) {
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA256.getDigestAlgorithm(),
+                            "MGF1",
+                            MGF1ParameterSpec.SHA256,
+                            32,
+                            1));
+                } else if (type.equals(RSASignType.SHA384withRSA_PSS.getName())) {
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA384.getDigestAlgorithm(),
+                            "MGF1",
+                            MGF1ParameterSpec.SHA384,
+                            48,
+                            1));
+                } else if (type.equals(RSASignType.SHA512withRSA_PSS.getName())) {
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA512.getDigestAlgorithm(),
+                            "MGF1",
+                            MGF1ParameterSpec.SHA512,
+                            64,
+                            1));
+                }
+            }
+            signature.initSign(privateKey);
+            signature.update(data);
+            byte[] signed = signature.sign();
+            return signed;
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * RSA签名验证
+     *
+     * @param type
+     * @param publicKey
+     * @param data
+     * @param signed
+     * @return
+     */
+    public static boolean RSASignVerify(RSASignType type, RSAPublicKey publicKey, byte[] data, byte[] signed) {
+        try {
+            Signature signature = Signature.getInstance(type.getName());
+            if (type.getName().endsWith("PSS")) {
+                if (type.equals(RSASignType.SHA256withRSA_PSS.getName())) {
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA256.getDigestAlgorithm(),
+                            "MGF1",
+                            MGF1ParameterSpec.SHA256,
+                            32,
+                            1));
+                } else if (type.equals(RSASignType.SHA384withRSA_PSS.getName())) {
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA384.getDigestAlgorithm(),
+                            "MGF1",
+                            MGF1ParameterSpec.SHA384,
+                            48,
+                            1));
+                } else if (type.equals(RSASignType.SHA512withRSA_PSS.getName())) {
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA512.getDigestAlgorithm(),
+                            "MGF1",
+                            MGF1ParameterSpec.SHA512,
+                            64,
+                            1));
+                }
+            }
+            signature.initVerify(publicKey);
+            signature.update(data);
+            return signature.verify(signed);
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * ECC曲线
+     */
+    public enum ECCCurve {
+
+        secp224r1("secp224r1", 2), secp256r1("secp256r1", 3), secp384r1("secp384r1", 4), secp521r1("secp521r1", 5),
+        brainpoolp256r1("brainpoolp256r1", 6), brainpoolp384r1("brainpoolp384r1", 7), brainpoolp512r1("brainpoolp512r1", 8),
+        P_224("P-224", 2), P_256("P-256", 3), P_384("P-384", 4), P_521("P-521", 5);
+
+        private String name;
+        private int value;
+
+        private ECCCurve(final String name, int value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public void setValue(int value) {
+            this.value = value;
         }
 
         @Override
@@ -847,7 +899,23 @@ public class AlgUtil {
         try {
             ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec(eccCurve.getName());
             KeyPairGenerator generator = KeyPairGenerator.getInstance("ECDH");
-            generator.initialize(parameterSpec);
+            int random = 0;
+            if (eccCurve.equals(ECCCurve.secp224r1)) {
+                random = 28;
+            } else if (eccCurve.equals(ECCCurve.secp256r1)) {
+                random = 32;
+            } else if (eccCurve.equals(ECCCurve.secp384r1)) {
+                random = 48;
+            } else if (eccCurve.equals(ECCCurve.secp521r1)) {
+                random = 66;
+            } else if (eccCurve.equals(ECCCurve.brainpoolp256r1)) {
+                random = 32;
+            } else if (eccCurve.equals(ECCCurve.brainpoolp384r1)) {
+                random = 48;
+            } else if (eccCurve.equals(ECCCurve.brainpoolp512r1)) {
+                random = 64;
+            }
+            generator.initialize(parameterSpec, new SecureRandom(getRandom(random)));
             keyPair = generator.generateKeyPair();
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
@@ -855,4 +923,179 @@ public class AlgUtil {
         return keyPair;
     }
 
+    /**
+     * ECC签名方式
+     */
+    public enum ECCSignType {
+        NONEwithECDSA("NONEwithECDSA"),SHA256withECDSA("SHA256withECDSA"), SHA384withECDSA("SHA384withECDSA"), SHA512withECDSA("SHA512withECDSA");
+
+        private String name;
+
+        private ECCSignType(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * ECC签名
+     *
+     * @param type
+     * @param privateKey
+     * @param data
+     * @return
+     */
+    public static byte[] ECCSign(ECCSignType type, ECPrivateKey privateKey, byte[] data) {
+        try {
+            Signature signature = Signature.getInstance(type.getName());
+            signature.initSign(privateKey);
+            signature.update(data);
+            byte[] signed = signature.sign();
+            return signed;
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * ECC签名验证
+     *
+     * @param type
+     * @param publicKey
+     * @param data
+     * @param signed
+     * @return
+     */
+    public static boolean ECCSignVerify(ECCSignType type, ECPublicKey publicKey, byte[] data, byte[] signed) {
+        try {
+            Signature signature = Signature.getInstance(type.getName());
+            signature.initVerify(publicKey);
+            signature.update(data);
+            return signature.verify(signed);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * 获得共享密钥
+     * @param myPrivateKey
+     * @param otherPublicKey
+     * @return
+     */
+    public static byte[] getShareKey(ECPrivateKey myPrivateKey,ECPublicKey otherPublicKey){
+        byte[] shareKey = null;
+        try {
+            KeyAgreement agreement = KeyAgreement.getInstance("ECDH");
+            agreement.init(myPrivateKey);
+            agreement.doPhase(otherPublicKey, true);
+            shareKey= agreement.generateSecret();
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return shareKey;
+    }
+
+    /**
+     * HKDF
+     *
+     * @param digest
+     * @param salt
+     * @param info
+     * @param ikm
+     * @param keyLen
+     * @return
+     */
+    public static byte[] hkdf(Digest digest, byte[] salt, byte[] info, byte[] ikm, int keyLen) {
+        HKDFBytesGenerator hkdf = new HKDFBytesGenerator(digest);
+        HKDFParameters params = new HKDFParameters(ikm, salt, info);
+        hkdf.init(params);
+        byte[] okm = new byte[keyLen];
+        hkdf.generateBytes(okm, 0, keyLen);
+        return okm;
+    }
+
+    /**
+     * 解析ECC签名数据得到R/S
+     *
+     * @param signed
+     * @return
+     */
+    public static ECCSigned parseECCSigned(byte[] signed) {
+        return new ECCSigned(signed);
+    }
+
+    /**
+     * 签名的主体分为R和S两部分。R(或S)的长度等于ECC私钥长度。R(或S)前的T为0x02，签名T为0x30。总体格式如下：
+     * 30 + LEN1 + 02 + LEN2 + 00 (optional) + r + 02 + LEN3 + 00(optional) + s
+     * 当R或S的第1字节大于0x80时，需要在R或S前加1字节0x00
+     * LEN2为，0x00(optional) + R 的字节长度
+     * LEN3为，0x00(optional) + S 的字节长度
+     * LEN1为，LEN2+LEN3+4字节长度
+     *
+     * @author yun
+     */
+    public static class ECCSigned {
+        private byte[] R;
+        private byte[] S;
+
+        public ECCSigned(byte[] signed) {
+            parse(signed);
+        }
+
+        public ECCSigned(byte[] R, byte[] S) {
+            this.R = R;
+            this.S = S;
+        }
+
+        public byte[] getR() {
+            return R;
+        }
+
+        public byte[] getS() {
+            return S;
+        }
+
+        private void parse(byte[] signed) {
+            List<TLVUtil.TLV> tlv = TLVUtil.parseDER(signed);
+            this.R = tlv.get(0).getChildren().get(0).getValue();
+            if(R[0]==0x00){
+                this.R=Bytes.subBytes(R,1);
+            }
+            this.S = tlv.get(0).getChildren().get(1).getValue();
+            if(S[0]==0x00){
+                this.S=Bytes.subBytes(S,1);
+            }
+        }
+
+        public byte[] getSigned() {
+            byte[] tag = new byte[] { 0x30 };
+            byte[] tagR = new byte[] { 0x02 };
+            if ((this.R[0]&0xFF) > 0x80) {
+                this.R = Bytes.concat(new byte[] { 0x00 }, this.R);
+            }
+            byte[] lenR = Bytes.getDERLen(this.R.length);
+            byte[] tagS = new byte[] { 0x02 };
+            if ((this.S[0]&0xFF) > 0x80) {
+                this.S = Bytes.concat(new byte[] { 0x00 }, this.S);
+            }
+            byte[] lenS = Bytes.getDERLen(this.S.length);
+            byte[] signed = Bytes.concat(tagR, lenR, R, tagS, lenS, S);
+            return Bytes.concat(tag, Bytes.getDERLen(signed.length), signed);
+        }
+    }
 }

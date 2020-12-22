@@ -2,6 +2,12 @@ package com.biapp.util;
 
 import com.biapp.util.TLVUtil.TLV;
 
+import org.spongycastle.jce.ECNamedCurveTable;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
+import org.spongycastle.jce.spec.ECParameterSpec;
+import org.spongycastle.jce.spec.ECPrivateKeySpec;
+import org.spongycastle.jce.spec.ECPublicKeySpec;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -9,7 +15,9 @@ import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
@@ -17,6 +25,8 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -34,6 +44,13 @@ import aura.data.Bytes;
  * @author yun
  */
 public class CertUtil {
+
+    // 增加BouncyCastle
+    private static final Provider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
+
+    static {
+        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
+    }
 
     /***
      * X.509证书结构 X.509证书结构长度+证书长度+证书信息(1 证书版本信息 2 证书序列号 3 签名算法描述 4 证书颁发者信息 5 有效期信息 6
@@ -333,7 +350,7 @@ public class CertUtil {
                         TLV certInfos = tlvs.get(0).getChildren().get(0);
                         if (certInfos.getChildren() != null && !certInfos.getChildren().isEmpty() && certInfos.getChildren().size() == 8) {
                             this.extend = certInfos.getChildren().get(7).getChildren().get(0).getChildren();
-                            x509Items=new ArrayList<>();
+                            x509Items = new ArrayList<>();
                             x509Items.add(certInfos.getChildren().get(0));
                             x509Items.add(certInfos.getChildren().get(1));
                             x509Items.add(certInfos.getChildren().get(2));
@@ -342,7 +359,7 @@ public class CertUtil {
                             x509Items.add(certInfos.getChildren().get(5));
                             x509Items.add(certInfos.getChildren().get(6));
                             x509Items.add(certInfos.getChildren().get(7));
-                            if(tlvs.size()==3){
+                            if (tlvs.size() == 3) {
                                 x509Items.add(tlvs.get(0).getChildren().get(1));
                                 x509Items.add(tlvs.get(0).getChildren().get(2));
                             }
@@ -968,4 +985,69 @@ public class CertUtil {
         return true;
     }
 
+    /**
+     * 16进制转ECC公钥
+     *
+     * @param eccCurve
+     * @param hex
+     * @return
+     */
+    public static ECPublicKey hex2ECPublicKey(AlgUtil.ECCCurve eccCurve, String hex) {
+        ECPublicKey publicKey = null;
+        try {
+            byte[] point = Bytes.fromHexString(hex);
+            if (point[0] != 0x04) {
+                throw new InvalidKeyException("EC uncompressed point indicator with byte value 04 missing");
+            }
+            ECParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec(eccCurve.getName());
+            ECPublicKeySpec keySpec = new ECPublicKeySpec(parameterSpec.getCurve().decodePoint(point), parameterSpec);
+            KeyFactory keyFactory = KeyFactory.getInstance("ECDH");
+            publicKey = (ECPublicKey) keyFactory.generatePublic(keySpec);
+        } catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return publicKey;
+    }
+
+    /**
+     * 16进制转ECC私钥
+     *
+     * @param eccCurve
+     * @param hex
+     * @return
+     */
+    public static ECPrivateKey hex2ECPrivateKey(AlgUtil.ECCCurve eccCurve, String hex) {
+        ECPrivateKey privateKey = null;
+        ECParameterSpec ecParameterSpec = ECNamedCurveTable.getParameterSpec(eccCurve.getName());
+        BigInteger s = new BigInteger(hex, 16);
+        ECPrivateKeySpec keySpec = new ECPrivateKeySpec(s, ecParameterSpec);
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance("ECDH");
+            privateKey = (ECPrivateKey) keyFactory.generatePrivate(keySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return privateKey;
+    }
+
+    /**
+     * EC公钥转16进制
+     *
+     * @param publicKey
+     * @return
+     */
+    public static byte[] ECPublicKey2Hex(ECPublicKey publicKey) {
+        return Bytes.concat(new byte[]{0x04}, Bytes.fromHexString(publicKey.getW().getAffineX().toString(16)),
+                Bytes.fromHexString(publicKey.getW().getAffineY().toString(16)));
+    }
+
+    /**
+     * EC私钥转16进制
+     *
+     * @param privateKey
+     * @return
+     */
+    public static byte[] ECPrivateKey2Hex(ECPrivateKey privateKey) {
+        return Bytes.fromHexString(privateKey.getS().toString(16));
+    }
 }

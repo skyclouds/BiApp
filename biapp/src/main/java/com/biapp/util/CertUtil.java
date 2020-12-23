@@ -555,7 +555,8 @@ public class CertUtil {
      * @return
      */
     public static byte[] RSAPublicKey2Hex(RSAPublicKey publicKey) {
-        byte[] hex = Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16)), Bytes.fromHexString(publicKey.getPublicExponent().toString(16)));
+        byte[] hex = Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(FormatUtil.addHead('0', publicKey.getModulus().bitLength() / 4, publicKey.getPublicExponent().toString(16))));
         return Bytes.concat(Bytes.fromInt(publicKey.getModulus().bitLength(), 4, Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
 
@@ -577,12 +578,12 @@ public class CertUtil {
             index += 4;
             bits = (tmp[0] & 0xFF) * 256 * 256 + (tmp[1] & 0xFF) * 256 + (tmp[2] & 0xFF);
             // 公钥modulus
-            tmp = Bytes.subBytes(hexData, index, 256);
-            index += 256;
+            tmp = Bytes.subBytes(hexData, index, bits / 8);
+            index += bits / 8;
             BigInteger modulus = new BigInteger(Bytes.toHexString(tmp), 16);
             // 公钥exponent
-            tmp = Bytes.subBytes(hexData, index, 256);
-            index += 256;
+            tmp = Bytes.subBytes(hexData, index, bits / 8);
+            index += bits / 8;
             BigInteger exponent = new BigInteger(Bytes.toHexString(tmp), 16);
             RSAPublicKeySpec keySpec = new RSAPublicKeySpec(modulus, exponent);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -603,14 +604,14 @@ public class CertUtil {
      * @return
      */
     public static byte[] RSAPrivateCrtKey2Hex(RSAPrivateCrtKey privateKey) {
-        byte[] hex = Bytes.concat(Bytes.fromHexString(privateKey.getModulus().toString(16)),
-                Bytes.fromHexString(privateKey.getPublicExponent().toString(16)),
-                Bytes.fromHexString(privateKey.getPrivateExponent().toString(16)),
-                Bytes.fromHexString(privateKey.getPrimeP().toString(16)),
-                Bytes.fromHexString(privateKey.getPrimeQ().toString(16)),
-                Bytes.fromHexString(privateKey.getPrimeExponentP().toString(16)),
-                Bytes.fromHexString(privateKey.getPrimeExponentQ().toString(16)),
-                Bytes.fromHexString(privateKey.getCrtCoefficient().toString(16)));
+        byte[] hex = Bytes.concat(Bytes.fromHexString(privateKey.getModulus().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(FormatUtil.addHead('0', privateKey.getModulus().bitLength() / 4, privateKey.getPublicExponent().toString(16))),
+                Bytes.fromHexString(privateKey.getPrivateExponent().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeP().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeQ().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeExponentP().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeExponentQ().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getCrtCoefficient().toString(16),Bytes.ALIGN.ALIGN_RIGHT));
         return Bytes.concat(Bytes.fromInt(privateKey.getModulus().bitLength(), 4, Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
 
@@ -632,42 +633,42 @@ public class CertUtil {
             index += 4;
             bits = (tmp[0] & 0xFF) * 256 * 256 + (tmp[1] & 0xFF) * 256 + (tmp[2] & 0xFF);
             // 私钥modulus
-            tmp = Bytes.subBytes(hexData, index, 256);
-            index += 256;
+            tmp = Bytes.subBytes(hexData, index, bits / 8);
+            index += bits / 8;
             BigInteger modulus = new BigInteger(Bytes.toHexString(tmp), 16);
             // 公钥Exponent
-            tmp = Bytes.subBytes(hexData, index, 256);
-            index += 256;
+            tmp = Bytes.subBytes(hexData, index, bits / 8);
+            index += bits / 8;
             BigInteger publicExponent = new BigInteger(Bytes.toHexString(tmp), 16);
             // 私钥Exponent
-            tmp = Bytes.subBytes(hexData, index, 256);
-            index += 256;
+            tmp = Bytes.subBytes(hexData, index, bits / 8);
+            index += bits / 8;
             BigInteger privateExponent = new BigInteger(Bytes.toHexString(tmp), 16);
             // 私钥prime
             byte[][] buf = new byte[2][];
-            tmp = Bytes.subBytes(hexData, index, 128);
-            index += 128;
+            tmp = Bytes.subBytes(hexData, index, bits / 16);
+            index += bits / 16;
             buf[0] = tmp;
             // primeP
             BigInteger primeP = new BigInteger(Bytes.toHexString(buf[0]), 16);
-            tmp = Bytes.subBytes(hexData, index, 128);
-            index += 128;
+            tmp = Bytes.subBytes(hexData, index, bits / 16);
+            index += bits / 16;
             buf[1] = tmp;
             // primeQ
             BigInteger primeQ = new BigInteger(Bytes.toHexString(buf[1]), 16);
             // 私钥primeExponent
             buf = new byte[2][];
-            tmp = Bytes.subBytes(hexData, index, 128);
-            index += 128;
+            tmp = Bytes.subBytes(hexData, index, bits / 16);
+            index += bits / 16;
             buf[0] = tmp;
             BigInteger primeExponentP = new BigInteger(Bytes.toHexString(buf[0]), 16);
-            tmp = Bytes.subBytes(hexData, index, 128);
-            index += 128;
+            tmp = Bytes.subBytes(hexData, index, bits / 16);
+            index += bits / 16;
             buf[1] = tmp;
             BigInteger primeExponentQ = new BigInteger(Bytes.toHexString(buf[1]), 16);
             // 私钥coefficient
-            tmp = Bytes.subBytes(hexData, index, 128);
-            index += 128;
+            tmp = Bytes.subBytes(hexData, index, bits / 16);
+            index += bits / 16;
             BigInteger coefficient = new BigInteger(Bytes.toHexString(tmp), 16);
             RSAPrivateCrtKeySpec keySpec = new RSAPrivateCrtKeySpec(modulus, publicExponent, privateExponent, primeP,
                     primeQ, primeExponentP, primeExponentQ, coefficient);
@@ -1018,10 +1019,10 @@ public class CertUtil {
      */
     public static ECPrivateKey hex2ECPrivateKey(AlgUtil.ECCCurve eccCurve, String hex) {
         ECPrivateKey privateKey = null;
-        ECParameterSpec ecParameterSpec = ECNamedCurveTable.getParameterSpec(eccCurve.getName());
-        BigInteger s = new BigInteger(hex, 16);
-        ECPrivateKeySpec keySpec = new ECPrivateKeySpec(s, ecParameterSpec);
         try {
+            ECParameterSpec ecParameterSpec = ECNamedCurveTable.getParameterSpec(eccCurve.getName());
+            BigInteger s = new BigInteger(hex, 16);
+            ECPrivateKeySpec keySpec = new ECPrivateKeySpec(s, ecParameterSpec);
             KeyFactory keyFactory = KeyFactory.getInstance("ECDH");
             privateKey = (ECPrivateKey) keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -1037,8 +1038,12 @@ public class CertUtil {
      * @return
      */
     public static byte[] ECPublicKey2Hex(ECPublicKey publicKey) {
-        return Bytes.concat(new byte[]{0x04}, Bytes.fromHexString(publicKey.getW().getAffineX().toString(16)),
-                Bytes.fromHexString(publicKey.getW().getAffineY().toString(16)));
+        int keySize = publicKey.getParams().getCurve().getField().getFieldSize() / 8;
+        byte[] data = publicKey.getEncoded();
+        if (keySize % 2 != 0) {
+            keySize++;
+        }
+        return Bytes.subBytes(data, data.length - (1 + keySize * 2));
     }
 
     /**
@@ -1048,6 +1053,6 @@ public class CertUtil {
      * @return
      */
     public static byte[] ECPrivateKey2Hex(ECPrivateKey privateKey) {
-        return Bytes.fromHexString(privateKey.getS().toString(16));
+        return Bytes.fromHexString(privateKey.getS().toString(16), Bytes.ALIGN.ALIGN_RIGHT);
     }
 }

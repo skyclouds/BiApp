@@ -686,7 +686,7 @@ public class AlgUtil {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             BigInteger publicExponent = new BigInteger(exponent + "", 10);
             RSAKeyGenParameterSpec parameterSpec = new RSAKeyGenParameterSpec(modulus, publicExponent);
-            generator.initialize(parameterSpec);
+            generator.initialize(parameterSpec,new SecureRandom());
             keyPair = generator.generateKeyPair();
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
@@ -738,6 +738,7 @@ public class AlgUtil {
      * RSA签名方式
      */
     public enum RSASignType {
+        NONEwithRSA("NONEwithRSA"),
         SHA256withRSA("SHA256withRSA"),
         SHA384withRSA("SHA384withRSA"),
         SHA512withRSA("SHA512withRSA"),
@@ -899,23 +900,7 @@ public class AlgUtil {
         try {
             ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec(eccCurve.getName());
             KeyPairGenerator generator = KeyPairGenerator.getInstance("ECDH");
-            int random = 0;
-            if (eccCurve.equals(ECCCurve.secp224r1)) {
-                random = 28;
-            } else if (eccCurve.equals(ECCCurve.secp256r1)) {
-                random = 32;
-            } else if (eccCurve.equals(ECCCurve.secp384r1)) {
-                random = 48;
-            } else if (eccCurve.equals(ECCCurve.secp521r1)) {
-                random = 66;
-            } else if (eccCurve.equals(ECCCurve.brainpoolp256r1)) {
-                random = 32;
-            } else if (eccCurve.equals(ECCCurve.brainpoolp384r1)) {
-                random = 48;
-            } else if (eccCurve.equals(ECCCurve.brainpoolp512r1)) {
-                random = 64;
-            }
-            generator.initialize(parameterSpec, new SecureRandom(getRandom(random)));
+            generator.initialize(parameterSpec, new SecureRandom());
             keyPair = generator.generateKeyPair();
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
@@ -927,7 +912,7 @@ public class AlgUtil {
      * ECC签名方式
      */
     public enum ECCSignType {
-        NONEwithECDSA("NONEwithECDSA"),SHA256withECDSA("SHA256withECDSA"), SHA384withECDSA("SHA384withECDSA"), SHA512withECDSA("SHA512withECDSA");
+        NONEwithECDSA("NONEwithECDSA"), SHA256withECDSA("SHA256withECDSA"), SHA384withECDSA("SHA384withECDSA"), SHA512withECDSA("SHA512withECDSA");
 
         private String name;
 
@@ -993,17 +978,22 @@ public class AlgUtil {
 
     /**
      * 获得共享密钥
+     *
      * @param myPrivateKey
      * @param otherPublicKey
      * @return
      */
-    public static byte[] getShareKey(ECPrivateKey myPrivateKey,ECPublicKey otherPublicKey){
+    public static byte[] getShareKey(ECPrivateKey myPrivateKey, ECPublicKey otherPublicKey) {
         byte[] shareKey = null;
         try {
             KeyAgreement agreement = KeyAgreement.getInstance("ECDH");
             agreement.init(myPrivateKey);
             agreement.doPhase(otherPublicKey, true);
-            shareKey= agreement.generateSecret();
+            shareKey = agreement.generateSecret();
+            //移除补位的0x00
+            if(shareKey[0]==0x00){
+                shareKey=Bytes.subBytes(shareKey,1);
+            }
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             e.printStackTrace();
         }
@@ -1073,25 +1063,25 @@ public class AlgUtil {
         private void parse(byte[] signed) {
             List<TLVUtil.TLV> tlv = TLVUtil.parseDER(signed);
             this.R = tlv.get(0).getChildren().get(0).getValue();
-            if(R[0]==0x00){
-                this.R=Bytes.subBytes(R,1);
+            if (R[0] == 0x00) {
+                this.R = Bytes.subBytes(R, 1);
             }
             this.S = tlv.get(0).getChildren().get(1).getValue();
-            if(S[0]==0x00){
-                this.S=Bytes.subBytes(S,1);
+            if (S[0] == 0x00) {
+                this.S = Bytes.subBytes(S, 1);
             }
         }
 
         public byte[] getSigned() {
-            byte[] tag = new byte[] { 0x30 };
-            byte[] tagR = new byte[] { 0x02 };
-            if ((this.R[0]&0xFF) > 0x80) {
-                this.R = Bytes.concat(new byte[] { 0x00 }, this.R);
+            byte[] tag = new byte[]{0x30};
+            byte[] tagR = new byte[]{0x02};
+            if ((this.R[0] & 0xFF) >= 0x80) {
+                this.R = Bytes.concat(new byte[]{0x00}, this.R);
             }
             byte[] lenR = Bytes.getDERLen(this.R.length);
-            byte[] tagS = new byte[] { 0x02 };
-            if ((this.S[0]&0xFF) > 0x80) {
-                this.S = Bytes.concat(new byte[] { 0x00 }, this.S);
+            byte[] tagS = new byte[]{0x02};
+            if ((this.S[0] & 0xFF) >= 0x80) {
+                this.S = Bytes.concat(new byte[]{0x00}, this.S);
             }
             byte[] lenS = Bytes.getDERLen(this.S.length);
             byte[] signed = Bytes.concat(tagR, lenR, R, tagS, lenS, S);

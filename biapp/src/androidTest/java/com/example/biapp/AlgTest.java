@@ -63,18 +63,9 @@ public class AlgTest {
     @Test
     public void hashTest() {
         byte[] data = AlgUtil.getRandom(125);
-        PrintfUtil.d("MD2", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.MD2, data)));
-        PrintfUtil.d("MD4", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.MD4, data)));
-        PrintfUtil.d("MD5", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.MD5, data)));
-        PrintfUtil.d("SHA1", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA1, data)));
-        PrintfUtil.d("SHA224", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA224, data)));
         PrintfUtil.d("SHA256", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA256, data)));
         PrintfUtil.d("SHA384", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA384, data)));
         PrintfUtil.d("SHA512", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA512, data)));
-        PrintfUtil.d("SHA3-224", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA3_224, data)));
-        PrintfUtil.d("SHA3-256", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA3_256, data)));
-        PrintfUtil.d("SHA3-384", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA3_384, data)));
-        PrintfUtil.d("SHA3-256", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA3_256, data)));
         PrintfUtil.d("SM3", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SM3, data)));
     }
 
@@ -273,6 +264,35 @@ public class AlgTest {
         PrintfUtil.d("newKsn2", newKsn2);
     }
 
+    @Test
+    public void hmacTest() {
+        byte[] data = Strings.encode("Sample message for keylen=blocklen");
+        byte[] key = Bytes.fromHexString("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F");
+        byte[] hmac = Bytes.fromHexString("8BB9A1DB9806F20DF7F77B82138C7914D174D59E13DC4D0169C9057B133E1D62");
+        byte[] result1 = AlgUtil.hmac(new SHA256Digest(), key, data);
+        PrintfUtil.d("Result1", "" + Bytes.equals(result1, hmac));
+
+        data = Strings.encode("Sample message for keylen<blocklen");
+        key = Bytes.fromHexString("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F");
+        hmac = Bytes.fromHexString("A28CF43130EE696A98F14A37678B56BCFCBDD9E5CF69717FECF5480F0EBDF790");
+        byte[] result2 = AlgUtil.hmac(new SHA256Digest(), key, data);
+        PrintfUtil.d("Result2", "" + Bytes.equals(result2, hmac));
+
+        data = Strings.encode("Sample message for keylen=blocklen");
+        key = Bytes.fromHexString("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F60616263");
+        hmac = Bytes.fromHexString("BDCCB6C72DDEADB500AE768386CB38CC41C63DBB0878DDB9C7A38A431B78378D");
+        byte[] result3 = AlgUtil.hmac(new SHA256Digest(), key, data);
+        PrintfUtil.d("Result3", "" + Bytes.equals(result3, hmac));
+
+        data = Strings.encode("Sample message for keylen<blocklen, with truncated tag");
+        key = Bytes.fromHexString("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F30");
+        hmac = Bytes.fromHexString("27A8B157839EFEAC98DF070B331D593618DDB985D403C0C786D23B5D132E57C7");
+
+        byte[] result4 = AlgUtil.hmac(new SHA256Digest(), key, data);
+        PrintfUtil.d("Result4", "" + Bytes.equals(result4, hmac));
+    }
+
+    @Test
     public void hkdfTest(){
         String shareKey1 = "EC0E9A9C792913CE0F4011E1FD259A118456BB422AF5DEB4786097809B78F2D3";
         String expect1 = "6060B85FAEA3C55635F613F3DFB6AB2B";

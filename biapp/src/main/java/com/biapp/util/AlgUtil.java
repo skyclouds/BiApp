@@ -8,6 +8,7 @@ import org.spongycastle.crypto.engines.DESEngine;
 import org.spongycastle.crypto.engines.DESedeEngine;
 import org.spongycastle.crypto.generators.HKDFBytesGenerator;
 import org.spongycastle.crypto.macs.CMac;
+import org.spongycastle.crypto.macs.HMac;
 import org.spongycastle.crypto.macs.ISO9797Alg3Mac;
 import org.spongycastle.crypto.params.HKDFParameters;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -92,7 +93,7 @@ public class AlgUtil {
      */
     public enum SymmetryModel {
 
-        ECB("ECB"), CBC("CBC"), GCM("GCM"), CTR("CTR");
+        ECB("ECB"), CBC("CBC");
 
         private String name;
 
@@ -119,10 +120,11 @@ public class AlgUtil {
      */
     public enum SymmetryPadding {
 
-        NoPadding("NoPadding"), ZeroBytePadding("ZeroBytePadding"), PKCS5Padding("PKCS5Padding"),
-        PKCS7Padding("PKCS7Padding"), ISO9797_1Padding("ISO9797-1Padding"), ISO7816_4Padding("ISO7816-4Padding"),
-        ISO10126Padding("ISO10126Padding"), ISO10126_2Padding("ISO10126-2Padding"), X923Padding("X923Padding"),
-        X9_23Padding("X9.23Padding");
+        NoPadding("NoPadding"),
+        ZeroBytePadding("ZeroBytePadding"),
+        PKCS5Padding("PKCS5Padding"),
+        PKCS7Padding("PKCS7Padding"),
+        ISO9797_1Padding("ISO9797-1Padding");
 
         private String name;
 
@@ -207,8 +209,9 @@ public class AlgUtil {
      */
     public enum HashAlgorithm {
 
-        MD2("MD2"), MD4("MD4"), MD5("MD5"), SHA1("SHA-1"), SHA224("SHA-224"), SHA256("SHA-256"), SHA384("SHA-384"),
-        SHA512("SHA-512"), SHA3_224("SHA3-224"), SHA3_256("SHA3-256"), SHA3_384("SHA3-384"), SHA3_512("SHA3-512"),
+        SHA256("SHA-256"),
+        SHA384("SHA-384"),
+        SHA512("SHA-512"),
         SM3("SM3");
 
         private String name;
@@ -485,6 +488,23 @@ public class AlgUtil {
     }
 
     /**
+     * HMAC算法
+     *
+     * @param digest
+     * @param key
+     * @param data
+     * @return
+     */
+    public static byte[] hmac(Digest digest, byte[] key, byte[] data) {
+        HMac hmac = new HMac(digest);
+        hmac.init(new KeyParameter(key));
+        hmac.update(data, 0, data.length);
+        byte[] result = new byte[hmac.getMacSize()];
+        hmac.doFinal(result, 0);
+        return result;
+    }
+
+    /**
      * TDES DUKPT IK 衍生
      *
      * @param bdk
@@ -648,7 +668,8 @@ public class AlgUtil {
 
         NoPadding("NoPadding"),
         PKCS1Padding("PKCS1Padding"),
-        OAEPWithSHA256AndMGF1Padding("OAEPWithSHA256AndMGF1Padding");
+        OAEPWithSHA256AndMGF1Padding("OAEPWithSHA256AndMGF1Padding"),
+        OAEPWithSHA512AndMGF1Padding("OAEPWithSHA512AndMGF1Padding");
 
         private String name;
 
@@ -990,10 +1011,6 @@ public class AlgUtil {
             agreement.init(myPrivateKey);
             agreement.doPhase(otherPublicKey, true);
             shareKey = agreement.generateSecret();
-            //移除补位的0x00
-            if(shareKey[0]==0x00){
-                shareKey=Bytes.subBytes(shareKey,1);
-            }
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             e.printStackTrace();
         }

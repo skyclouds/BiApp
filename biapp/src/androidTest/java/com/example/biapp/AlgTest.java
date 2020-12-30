@@ -9,6 +9,7 @@ import com.biapp.util.PrintfUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.digests.SHA512Digest;
 
 import java.security.KeyPair;
 import java.security.SecureRandom;
@@ -100,6 +101,28 @@ public class AlgTest {
         PrintfUtil.d("Str2-ISO9797-1MACAlgorithm3-Method2", Bytes.toHexString(AlgUtil.ISO9797_1_MACAlgorithm3(Bytes.fromHexString(key2), string2.getBytes(), AlgUtil.MacAlgorithmPadding.Method3)));
 
     }
+
+    @Test
+    public void ingenicKCVTest() {
+        PrintfUtil.d("DES", "" + Bytes.toHexString(AlgUtil.desLegacyKCV(Bytes.fromHexString("2222222222222222"))).substring(0, 6).equals("00962B"));
+        PrintfUtil.d("DES_16", "" + Bytes.toHexString(AlgUtil.tdesLegacyKCV(Bytes.fromHexString("22222222222222224444444444444444"))).substring(0, 6).equals("3A42D7"));
+        PrintfUtil.d("DES_24", "" + Bytes.toHexString(AlgUtil.tdesLegacyKCV(Bytes.fromHexString("222222222222222244444444444444446666666666666666"))).substring(0, 6).equals("1A0465"));
+        PrintfUtil.d("AES_128", "" + Bytes.toHexString(AlgUtil.aesCMACKCV(Bytes.fromHexString("22222222222222224444444444444444"))).substring(0, 6).equals("0A0F92"));
+        PrintfUtil.d("AES_192", "" + Bytes.toHexString(AlgUtil.aesCMACKCV(Bytes.fromHexString("222222222222222244444444444444446666666666666666"))).substring(0, 6).equals("E4CEC0"));
+        PrintfUtil.d("AES_256", "" + Bytes.toHexString(AlgUtil.aesCMACKCV(Bytes.fromHexString("2222222222222222444444444444444466666666666666668888888888888888"))).substring(0, 6).equals("AD77D6"));
+
+        PrintfUtil.d("HMAC_16", "" + Bytes.toHexString(AlgUtil.ingenicHMACKCV(Bytes.fromHexString("22222222222222224444444444444444"))).substring(0, 6).equals("3E3CD3"));
+        PrintfUtil.d("HMAC_24", "" + Bytes.toHexString(AlgUtil.ingenicHMACKCV(Bytes.fromHexString("222222222222222244444444444444446666666666666666"))).substring(0, 6).equals("D3A95C"));
+        PrintfUtil.d("HMAC_32", "" + Bytes.toHexString(AlgUtil.ingenicHMACKCV(Bytes.fromHexString("2222222222222222444444444444444466666666666666668888888888888888"))).substring(0, 6).equals("67E44C"));
+    }
+
+    @Test
+    public void ingenicDCVTest() {
+        PrintfUtil.d("SecretClientDATA(>=16)", "" + Bytes.toHexString(AlgUtil.ingenicDCV(Bytes.fromHexString("2222222222222222444444444444444466666666666666668888888888888888"), true)).substring(0, 6).equals("18310F"));
+        PrintfUtil.d("SecretClientDATA(=8)", "" + Bytes.toHexString(AlgUtil.ingenicDCV(Bytes.fromHexString("2222222222222222"), true)).substring(0, 6).equals("00962B"));
+        PrintfUtil.d("CleartextClientDATA", "" + Bytes.toHexString(AlgUtil.ingenicDCV(Bytes.fromHexString("2222222222222222444444444444444466666666666666668888888888888888"), false)).substring(0, 6).equals("18310F"));
+    }
+
 
     @Test
     public void rsaHexTest() {
@@ -293,21 +316,70 @@ public class AlgTest {
     }
 
     @Test
-    public void hkdfTest(){
+    public void hkdfTest() {
         String shareKey1 = "EC0E9A9C792913CE0F4011E1FD259A118456BB422AF5DEB4786097809B78F2D3";
         String expect1 = "6060B85FAEA3C55635F613F3DFB6AB2B";
-        byte[] tk1 = AlgUtil.hkdf(new SHA256Digest(),Strings.encode("kld-ik-inject-salt"),Strings.encode("kld-ik-inject"),Bytes.fromHexString(shareKey1), 16);
-        PrintfUtil.d("t1", ""+Bytes.toHexString(tk1).equals(expect1));
+        byte[] tk1 = AlgUtil.hkdf(new SHA256Digest(), Strings.encode("kld-ik-inject-salt"), Strings.encode("kld-ik-inject"), Bytes.fromHexString(shareKey1), 16);
+        PrintfUtil.d("t1", "" + Bytes.toHexString(tk1).equals(expect1));
 
         String shareKey2 = "01F44B719841030FDC878B581BDAF1330A63248669B4B3955A4CA6FCFE58B18D75E5E24F95981CC115D209B443D5B29858D794723FFEC458585C860076814C2EC427";
         String expect2 = "5EA7470C4E7C3505D5308C535E60DBA8D9725E4FCACAA36BF759CCB144151AB8";
-        byte[] tk2 = AlgUtil.hkdf(new SHA256Digest(),Strings.encode("kld-ik-inject-salt"),Strings.encode("kld-ik-inject"),Bytes.fromHexString(shareKey2), 32);
-        PrintfUtil.d("t2", ""+Bytes.toHexString(tk2).equals(expect2));
+        byte[] tk2 = AlgUtil.hkdf(new SHA256Digest(), Strings.encode("kld-ik-inject-salt"), Strings.encode("kld-ik-inject"), Bytes.fromHexString(shareKey2), 32);
+        PrintfUtil.d("t2", "" + Bytes.toHexString(tk2).equals(expect2));
 
         String shareKey3 = "01AEE05CDD3A48FFD95AC5A4DFEFC23A2401C293DF4B476F717B00346458C380D82EF89C2BB2DDBA0F3008C498D6E4BF3A77EB3F48878C34180F475D1F6745913A41";
         String expect3 = "8DC386B27EF9BA7D0C9FA303E029A83F51B5F77F0E5F3B304FB1610FC1E1EBF3";
-        byte[] tk3 = AlgUtil.hkdf(new SHA256Digest(),Strings.encode("kld-ik-inject-salt"),Strings.encode("kld-ik-inject"),Bytes.fromHexString(shareKey3), 32);
-        PrintfUtil.d("t3", ""+Bytes.toHexString(tk3).equals(expect3));
+        byte[] tk3 = AlgUtil.hkdf(new SHA256Digest(), Strings.encode("kld-ik-inject-salt"), Strings.encode("kld-ik-inject"), Bytes.fromHexString(shareKey3), 32);
+        PrintfUtil.d("t3", "" + Bytes.toHexString(tk3).equals(expect3));
+    }
+
+    @Test
+    public void ingenicoECDHTest() {
+        String KRD_priv = "001B27EAEE67A9F7C8442D3C78F1CE176ED85C16C6ABD65D08981B9798B4DBA0DBA24FA9672233C78E2C3B0EEF2D64FE39568155070B37E378FD1E2698F81598C673";
+        String KRD_pub = "040158F957A7BD15A84DEEE67BE9D097D58482DD389E506572C034299B98BC67E50BA1F280D787B19EA334398A09F8864605D3A7B8311F0A2625418CD194058A887CCD01D5C764FEE682D47781CDACD98765FDD5538724201386DA40FDD8B5843D32A0444B52ED5AFF7EB40DD60484728764DD53121053F79D23EC1457341DDD58D0651947";
+        String KRD_nonce = "518F618D09A9A767545EA504ABB39434";
+        String KRD_pub_x = "0158F957A7BD15A84DEEE67BE9D097D58482DD389E506572C034299B98BC67E50BA1F280D787B19EA334398A09F8864605D3A7B8311F0A2625418CD194058A887CCD";
+        String KRD_pub_y = "01D5C764FEE682D47781CDACD98765FDD5538724201386DA40FDD8B5843D32A0444B52ED5AFF7EB40DD60484728764DD53121053F79D23EC1457341DDD58D0651947";
+
+        String KDH_priv = "00969A03C672D84D04B33DFC8E9AE6AC0AB9A6E84ADC9C8344D3DF4ACBB1DDF69A8756AF35B8D4F8FF847FC9AD32E25DC0E62BD82203D040CA4D1C19932337B959D6";
+        String KDH_pub = "04019F603F9B98A50BAE8F35DBC70EA4F6C65776F640EE7A286A68BF2C0A5485BA4922C31F2332216D1BC48AB7D8096364C2AC9B6A4F41B3191B0EB3142602492EE62200B0210A52B1D58DD82E76696BA2E97DA7D416986FE8CEF03479396658831BB817CE8E42883A199CD184DCC2D13980EE0726244D950770AEF582B2D5DC6C94AC45A7";
+        String KDH_nonce = "9E5E488FBC36E6F51A5CC0EBE7FCD55A";
+        String KDH_pub_x = "019F603F9B98A50BAE8F35DBC70EA4F6C65776F640EE7A286A68BF2C0A5485BA4922C31F2332216D1BC48AB7D8096364C2AC9B6A4F41B3191B0EB3142602492EE622";
+        String KDH_pub_y = "00B0210A52B1D58DD82E76696BA2E97DA7D416986FE8CEF03479396658831BB817CE8E42883A199CD184DCC2D13980EE0726244D950770AEF582B2D5DC6C94AC45A7";
+
+        String SharedSecret = "00DB3A6678729EE8E980B815A4610B043CEF74EACD0F6699B47C01843813B57E9E86A13B96DD115D7BDE96DDCA8CBF749FDCF00895C19A2746C0A89886B37A1FF7C3";
+        byte[] shareKey = AlgUtil.getShareKey(CertUtil.hex2ECPrivateKey(AlgUtil.ECCCurve.P_521, KRD_priv),
+                CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDH_pub));
+        PrintfUtil.d("ShareKey", "" + Bytes.toHexString(shareKey).equals(SharedSecret));
+
+        String ExtractionResult = "7C791A27A940F61445795746DE4A2DD12C7DA801BC8EE63AA64D578B7B0CCAB8";
+        byte[] extractionResult = AlgUtil.hmac(new SHA256Digest(), Bytes.fromHexString(KDH_pub_x), shareKey);
+        PrintfUtil.d("extractionResult", "" + Bytes.toHexString(extractionResult).equals(ExtractionResult));
+
+        String Context = "014B444B00019F603F9B98A50BAE8F35DBC70EA4F6C65776F640EE7A286A68BF2C0A5485BA4922C31F2332216D1BC48AB7D8096364C2AC9B6A4F41B3191B0EB3142602492EE622518F618D09A9A767545EA504ABB394349E5E488FBC36E6F51A5CC0EBE7FCD55A0100";
+        byte[] context = Bytes.concat(new byte[]{0x01}, "KDK".getBytes(), new byte[]{0x00},
+                Bytes.fromHexString(KDH_pub_x), Bytes.fromHexString(KRD_nonce),
+                Bytes.fromHexString(KDH_nonce), new byte[]{0x01, 0x00});
+        PrintfUtil.d("Context", "" + Bytes.toHexString(context).equals(Context));
+
+        String KeyMaterial = "4DCE95F6095D394A882F16AF6B6F977D464F6BB24687C3C6D4C34E3AA0EFA202";
+        byte[] keyMaterial = AlgUtil.hmac(new SHA256Digest(), extractionResult, context);
+        PrintfUtil.d("KeyMaterial", "" + Bytes.toHexString(keyMaterial).equals(KeyMaterial));
+
+        Context = "010000004B6579426C6F636B50726F74656374000004010000010000";
+        context = Bytes.concat(new byte[]{0x01, 0x00, 0x00, 0x00}, "KeyBlockProtect".getBytes(),
+                new byte[]{0x00}, new byte[]{0x00, 0x04, 0x01, 0x00},
+                new byte[]{0x00, 0x01, 0x00, 0x00});
+        PrintfUtil.d("Context", "" + Bytes.toHexString(context).equals(Context));
+
+        String DerivedKey = "2A856D9437B104E2445A1FF09804EF7BDDB0124CC0C0097DF54894444258C200";
+        byte[] derivedKey = AlgUtil.hmac(new SHA512Digest(), keyMaterial, context);
+        derivedKey = Bytes.subBytes(derivedKey, 0, 32);
+        PrintfUtil.d("DerivedKey", "" + Bytes.toHexString(derivedKey).equals(DerivedKey));
+
+        byte[] ingenicKey = AlgUtil.ingenicECDH(shareKey, KDH_pub, Bytes.fromHexString(KRD_nonce), Bytes.fromHexString(KDH_nonce), AlgUtil.IngenicECDHDerivedKeyType.KeyBlockProtect,
+                AlgUtil.IngenicECDHDerivedKeyAlgorithm.AES256);
+        PrintfUtil.d("IngenicKey", "" + Bytes.toHexString(ingenicKey).equals(DerivedKey));
     }
 
 }

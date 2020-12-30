@@ -3,6 +3,9 @@ package com.biapp.util;
 import org.spongycastle.crypto.BlockCipher;
 import org.spongycastle.crypto.CipherParameters;
 import org.spongycastle.crypto.Digest;
+import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.digests.SHA384Digest;
+import org.spongycastle.crypto.digests.SHA512Digest;
 import org.spongycastle.crypto.engines.AESEngine;
 import org.spongycastle.crypto.engines.DESEngine;
 import org.spongycastle.crypto.engines.DESedeEngine;
@@ -48,6 +51,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import aura.data.Bytes;
 import aura.data.Ints;
+import aura.data.Strings;
 
 /**
  * @author yun
@@ -406,6 +410,15 @@ public class AlgUtil {
         return h;
     }
 
+    /**
+     * @param key
+     * @return
+     */
+    public static byte[] desLegacyKCV(byte[] key) {
+        byte[] zero = new byte[8];
+        Arrays.fill(zero, (byte) 0x00);
+        return encrypt(SymmetryAlgorithm.DES, SymmetryModel.CBC, SymmetryPadding.NoPadding, key, zero, zero);
+    }
 
     /**
      * @param key
@@ -502,6 +515,55 @@ public class AlgUtil {
         byte[] result = new byte[hmac.getMacSize()];
         hmac.doFinal(result, 0);
         return result;
+    }
+
+    /**
+     * Ingenic HMAC Key Check Value
+     *
+     * @param key
+     * @return
+     */
+    public static byte[] ingenicHMACKCV(byte[] key) {
+        if (key.length == 16) {
+            return hmac(new SHA256Digest(), key, "".getBytes());
+        } else if (key.length == 24) {
+            return hmac(new SHA384Digest(), key, "".getBytes());
+        } else if (key.length == 32) {
+            return hmac(new SHA512Digest(), key, "".getBytes());
+        } else {
+            throw new IllegalArgumentException("key length error");
+        }
+    }
+
+    /**
+     * Ingenic Data Check Value
+     * Secret Client Data are non-PCI data.
+     * They are used by customers to store proprietary data which are not keys.
+     * However, these client data need to be kept secret.
+     * For instance, these data can be serial numbers, key derivation constant etc...
+     * <p>
+     * Cleartext Client Data are non-PCI data.
+     * They are used by customers to store proprietary data which are not keys and not sensitive.
+     * For instance, these data can be a text or a random value that need to be stored.
+     * Check Values for Cleartext Client Data use the technique where the check value is calculated by Hashing the secret client data using the SHA-256 algorithm.
+     * The check value is the leftmost 6 hexadecimal digits (3 bytes).
+     *
+     * @param data
+     * @param secret
+     * @return
+     */
+    public static byte[] ingenicDCV(byte[] data, boolean secret) {
+        if (!secret) {
+            return hash(AlgUtil.HashAlgorithm.SHA256, data);
+        } else {
+            if (data.length == 8) {
+                return desLegacyKCV(data);
+            } else if (data.length >= 16) {
+                return AlgUtil.hash(AlgUtil.HashAlgorithm.SHA256, data);
+            } else {
+                throw new IllegalArgumentException("data length error");
+            }
+        }
     }
 
     /**
@@ -707,7 +769,7 @@ public class AlgUtil {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             BigInteger publicExponent = new BigInteger(exponent + "", 10);
             RSAKeyGenParameterSpec parameterSpec = new RSAKeyGenParameterSpec(modulus, publicExponent);
-            generator.initialize(parameterSpec,new SecureRandom());
+            generator.initialize(parameterSpec, new SecureRandom());
             keyPair = generator.generateKeyPair();
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
@@ -1035,6 +1097,103 @@ public class AlgUtil {
         hkdf.generateBytes(okm, 0, keyLen);
         return okm;
     }
+
+    /**
+     * Ingenic ECDH 派生密钥类型
+     */
+    public enum IngenicECDHDerivedKeyType {
+        KeyBlockProtect("KeyBlockProtect"), DataEncryption("DataEncryption"), MesAuthentCode("MesAuthentCode");
+
+        private String name;
+
+        private IngenicECDHDerivedKeyType(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * Ingenic ECDH 派生密钥算法
+     */
+    public enum IngenicECDHDerivedKeyAlgorithm {
+        TDES24("TDES24"), AES128("AES128"), AES192("AES192"), AES256("AES256");
+
+        private String name;
+
+        private IngenicECDHDerivedKeyAlgorithm(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * Ingenic ECDH 派生算法
+     *
+     * @param shareKey
+     * @param KDHPublickKeyHex
+     * @param KRDRandom
+     * @param KDHRandom
+     * @param keyType
+     * @param algorithm
+     * @return
+     */
+    public static byte[] ingenicECDH(byte[] shareKey, String KDHPublickKeyHex, byte[] KRDRandom, byte[] KDHRandom,
+                                     IngenicECDHDerivedKeyType keyType, IngenicECDHDerivedKeyAlgorithm algorithm) {
+        byte[] separator = new byte[]{0x00};
+        ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDHPublickKeyHex);
+        byte[] KDHPub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
+        byte[] extractionResult = hmac(new SHA256Digest(), KDHPub_X, shareKey);
+        byte[] context = Bytes.concat(new byte[]{0x01}, "KDK".getBytes(), separator, KDHPub_X, KRDRandom, KDHRandom,
+                Bytes.fromInt(256, 2));
+        byte[] keyMaterial = hmac(new SHA256Digest(), extractionResult, context);
+        byte[] keyInfo = null;
+        int keyBitLength = 128;
+        if (algorithm == IngenicECDHDerivedKeyAlgorithm.TDES24) {
+            keyInfo = new byte[]{0x00, 0x01, 0x00, (byte) 0xC0};
+            keyBitLength = 192;
+        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES128) {
+            keyInfo = new byte[]{0x00, 0x02, 0x00, (byte) 0x80};
+            keyBitLength = 128;
+        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES192) {
+            keyInfo = new byte[]{0x00, 0x03, 0x00, (byte) 0xC0};
+            keyBitLength = 192;
+        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES256) {
+            keyInfo = new byte[]{0x00, 0x04, 0x01, 0x00};
+            keyBitLength = 256;
+        } else {
+            throw new IllegalArgumentException("IngenicECDHDerivedKey Algorithm unknown");
+        }
+        context = Bytes.concat(new byte[]{0x01, 0x00, 0x00, 0x00}, Strings.encode(keyType.getName()), separator,
+                keyInfo, Bytes.fromInt(keyBitLength, 4, Bytes.ENDIAN.LITTLE_ENDIAN));
+        byte[] derivedKey = hmac(new SHA512Digest(), keyMaterial, context);
+        derivedKey = Bytes.subBytes(derivedKey, 0, keyBitLength / 8);
+        return derivedKey;
+    }
+
 
     /**
      * 解析ECC签名数据得到R/S

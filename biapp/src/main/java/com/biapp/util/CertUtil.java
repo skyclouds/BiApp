@@ -7,14 +7,22 @@ import org.spongycastle.jce.provider.BouncyCastleProvider;
 import org.spongycastle.jce.spec.ECParameterSpec;
 import org.spongycastle.jce.spec.ECPrivateKeySpec;
 import org.spongycastle.jce.spec.ECPublicKeySpec;
+import org.spongycastle.operator.ContentSigner;
+import org.spongycastle.operator.OperatorCreationException;
+import org.spongycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.spongycastle.pkcs.PKCS10CertificationRequest;
+import org.spongycastle.pkcs.PKCS10CertificationRequestBuilder;
+import org.spongycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
@@ -38,7 +46,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.security.auth.x500.X500Principal;
+
 import aura.data.Bytes;
+import aura.data.Strings;
 
 /**
  * @author yun
@@ -555,7 +566,7 @@ public class CertUtil {
      * @return
      */
     public static byte[] RSAPublicKey2Hex(RSAPublicKey publicKey) {
-        byte[] hex = Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+        byte[] hex = Bytes.concat(Bytes.fromHexString(publicKey.getModulus().toString(16), Bytes.ALIGN.ALIGN_RIGHT),
                 Bytes.fromHexString(FormatUtil.addHead('0', publicKey.getModulus().bitLength() / 4, publicKey.getPublicExponent().toString(16))));
         return Bytes.concat(Bytes.fromInt(publicKey.getModulus().bitLength(), 4, Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
@@ -604,14 +615,14 @@ public class CertUtil {
      * @return
      */
     public static byte[] RSAPrivateCrtKey2Hex(RSAPrivateCrtKey privateKey) {
-        byte[] hex = Bytes.concat(Bytes.fromHexString(privateKey.getModulus().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
+        byte[] hex = Bytes.concat(Bytes.fromHexString(privateKey.getModulus().toString(16), Bytes.ALIGN.ALIGN_RIGHT),
                 Bytes.fromHexString(FormatUtil.addHead('0', privateKey.getModulus().bitLength() / 4, privateKey.getPublicExponent().toString(16))),
-                Bytes.fromHexString(privateKey.getPrivateExponent().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
-                Bytes.fromHexString(privateKey.getPrimeP().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
-                Bytes.fromHexString(privateKey.getPrimeQ().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
-                Bytes.fromHexString(privateKey.getPrimeExponentP().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
-                Bytes.fromHexString(privateKey.getPrimeExponentQ().toString(16),Bytes.ALIGN.ALIGN_RIGHT),
-                Bytes.fromHexString(privateKey.getCrtCoefficient().toString(16),Bytes.ALIGN.ALIGN_RIGHT));
+                Bytes.fromHexString(privateKey.getPrivateExponent().toString(16), Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeP().toString(16), Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeQ().toString(16), Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeExponentP().toString(16), Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getPrimeExponentQ().toString(16), Bytes.ALIGN.ALIGN_RIGHT),
+                Bytes.fromHexString(privateKey.getCrtCoefficient().toString(16), Bytes.ALIGN.ALIGN_RIGHT));
         return Bytes.concat(Bytes.fromInt(privateKey.getModulus().bitLength(), 4, Bytes.ENDIAN.LITTLE_ENDIAN), hex);
     }
 
@@ -690,15 +701,7 @@ public class CertUtil {
      * @return
      */
     public static String publicKey2PEMByPKCS1(RSAPublicKey publicKey) {
-        String pem = "";
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("-----BEGIN RSA PUBLIC KEY-----");
-        buffer.append(System.lineSeparator());
-        buffer.append(Bytes.toBase64String(publicKey2PKCS1(publicKey)));
-        buffer.append(System.lineSeparator());
-        buffer.append("-----END RSA PUBLIC KEY-----");
-        pem = buffer.toString();
-        return pem;
+        return Bytes.toPEMString("RSA PUBLIC KEY", publicKey2PKCS1(publicKey));
     }
 
     /**
@@ -708,15 +711,7 @@ public class CertUtil {
      * @return
      */
     public static String privateKey2PEMByPKCS1(RSAPrivateCrtKey privateKey) {
-        String pem = "";
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("-----BEGIN RSA PRIVATE KEY-----");
-        buffer.append(System.lineSeparator());
-        buffer.append(Bytes.toBase64String(privateKey2PKCS1(privateKey)));
-        buffer.append(System.lineSeparator());
-        buffer.append("-----END RSA PRIVATE KEY-----");
-        pem = buffer.toString();
-        return pem;
+        return Bytes.toPEMString("RSA PRIVATE KEY", privateKey2PKCS1(privateKey));
     }
 
     /**
@@ -726,15 +721,7 @@ public class CertUtil {
      * @return
      */
     public static String publicKey2PEMByPKCS8(RSAPublicKey publicKey) {
-        String pem = "";
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("-----BEGIN PUBLIC KEY-----");
-        buffer.append(System.lineSeparator());
-        buffer.append(Bytes.toBase64String(publicKey2PKCS8(publicKey)));
-        buffer.append(System.lineSeparator());
-        buffer.append("-----END PUBLIC KEY-----");
-        pem = buffer.toString();
-        return pem;
+        return Bytes.toPEMString("RSA PUBLIC KEY", publicKey2PKCS8(publicKey));
     }
 
     /**
@@ -744,15 +731,7 @@ public class CertUtil {
      * @return
      */
     public static String privateKey2PEMByPKCS8(RSAPrivateCrtKey privateKey) {
-        String pem = "";
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("-----BEGIN PRIVATE KEY-----");
-        buffer.append(System.lineSeparator());
-        buffer.append(Bytes.toBase64String(privateKey2PKCS8(privateKey)));
-        buffer.append(System.lineSeparator());
-        buffer.append("-----END PRIVATE KEY-----");
-        pem = buffer.toString();
-        return pem;
+        return Bytes.toPEMString("RSA PRIVATE KEY", privateKey2PKCS8(privateKey));
     }
 
     /**
@@ -1054,5 +1033,73 @@ public class CertUtil {
      */
     public static byte[] ECPrivateKey2Hex(ECPrivateKey privateKey) {
         return Bytes.fromHexString(privateKey.getS().toString(16), Bytes.ALIGN.ALIGN_RIGHT);
+    }
+
+    /**
+     * 签名算法
+     */
+    public enum SignatureAlgorithm {
+
+        SHA256withRSA("SHA256withRSA"),
+        SHA384withRSA("SHA384withRSA"),
+        SHA512withRSA("SHA512withRSA"),
+        SHA256withECDSA("SHA256withECDSA"),
+        SHA384withECDSA("SHA384withECDSA"),
+        SHA512withECDSA("SHA512withECDSA");
+
+        private String name;
+
+        private SignatureAlgorithm(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+
+    /**
+     * 获得CSR PEM格式
+     *
+     * @param CN         域名
+     * @param OU         部门/单位
+     * @param O          组织/公司
+     * @param L          城市
+     * @param ST         省份
+     * @param C          国家
+     * @param email      邮箱
+     * @param algorithm
+     * @param privateKey
+     * @param publicKey
+     * @return
+     */
+    public static String getCSRPEM(String CN, String OU, String O, String L, String ST, String C, String email,
+                                   SignatureAlgorithm algorithm, PrivateKey privateKey, PublicKey publicKey) {
+        String pem = "";
+        try {
+            String content = "CN=" + CN + "," + " OU=" + OU + "," + " O=" + O + "," + " L=" + L + "," + " ST=" + ST
+                    + "," + " C=" + C;
+            if (!Strings.isNullOrEmpty(email)) {
+                content += "," + "EMAIL=" + email;
+            }
+            X500Principal subject = new X500Principal(content);
+            ContentSigner signGen = new JcaContentSignerBuilder(algorithm.getName()).build(privateKey);
+            PKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, publicKey);
+            PKCS10CertificationRequest csrRequest = builder.build(signGen);
+            pem = Bytes.toPEMString("CERTIFICATE REQUEST", csrRequest.getEncoded());
+        } catch (OperatorCreationException | IOException e) {
+            e.printStackTrace();
+        }
+        return pem;
     }
 }

@@ -1078,6 +1078,38 @@ public class Bytes {
     }
 
     /**
+     * @param pemTAG
+     * @param data
+     * @return
+     */
+    public static String toPEMString(String pemTAG, byte[] data) {
+        String pem = "";
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("-----BEGIN " + pemTAG + "-----");
+        buffer.append(System.lineSeparator());
+        String base64 = Bytes.toBase64String(data);
+        int max = 64;
+        int round = base64.length() / max;
+        //小于64
+        if (round == 0) {
+            buffer.append(base64);
+            buffer.append(System.lineSeparator());
+        } else {
+            for (int i = 0; i < round; i++) {
+                buffer.append(base64.substring(i * max, (i + 1) * max));
+                buffer.append(System.lineSeparator());
+            }
+            if (base64.length() % max != 0) {
+                buffer.append(base64.substring(round * max));
+                buffer.append(System.lineSeparator());
+            }
+        }
+        buffer.append("-----END " + pemTAG + "-----");
+        pem = buffer.toString();
+        return pem;
+    }
+
+    /**
      * 获得DER长度
      *
      * @param value

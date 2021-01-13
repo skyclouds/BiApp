@@ -506,9 +506,12 @@ public class TR31 {
                 PrintfUtil.d("KSN", optionalBlockData);
             } else if (optionalBlockID.equals(OptionalBlockID.KP)) {
                 if (optionalBlockData.substring(0, 2).equals("00")) {
-                    PrintfUtil.d("KCV-algorithm", "Legacy KCV algorithm");
+                    PrintfUtil.d("KBPK KCV-algorithm", "Legacy KCV algorithm");
                 } else if (optionalBlockData.substring(0, 2).equals("00")) {
-                    PrintfUtil.d("KCV-algorithm", "CMAC based KCV");
+                    PrintfUtil.d("KBPK KCV-algorithm", "CMAC based KCV");
+                } else {
+                    PrintfUtil.e("KBPK KCV-algorithm", "Unknown");
+                    PrintfUtil.e("Hash algorithm", optionalBlockData.substring(0, 2));
                 }
                 PrintfUtil.d("KBPK KCV", optionalBlockData.substring(2));
             } else if (optionalBlockID.equals(OptionalBlockID.KC)) {
@@ -516,6 +519,9 @@ public class TR31 {
                     PrintfUtil.d("KCV-algorithm", "Legacy KCV algorithm");
                 } else if (optionalBlockData.substring(0, 2).equals("00")) {
                     PrintfUtil.d("KCV-algorithm", "CMAC based KCV");
+                } else {
+                    PrintfUtil.e("KCV-algorithm", "Unknown");
+                    PrintfUtil.e("Hash algorithm", optionalBlockData.substring(0, 2));
                 }
                 PrintfUtil.d("KCV", optionalBlockData.substring(2));
             } else if (optionalBlockID.equals(OptionalBlockID.HM)) {
@@ -541,6 +547,9 @@ public class TR31 {
                     PrintfUtil.d("Hash algorithm", "SHA3-384");
                 } else if (optionalBlockData.substring(0, 2).equals("33")) {
                     PrintfUtil.d("Hash algorithm", "SHA3-512");
+                } else {
+                    PrintfUtil.e("Hash algorithm", "Unknown");
+                    PrintfUtil.e("Hash algorithm", optionalBlockData.substring(0, 2));
                 }
                 PrintfUtil.d("HM", optionalBlockData.substring(2));
             } else {

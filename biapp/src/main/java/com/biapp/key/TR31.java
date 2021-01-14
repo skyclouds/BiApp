@@ -247,14 +247,14 @@ public class TR31 {
             throw new IllegalArgumentException("Key not set");
         }
         PrintfUtil.d("Key", Bytes.toHexString(key));
-        // 设置KP
-        if (keyBlockVersion == KeyBlockVersion.B) {
-            optionalBlocks.put(OptionalBlockID.KP,
-                    new OptionalBlock(KCVAlgorithm.LEGACY + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(bpk), 0, 3))));
-        } else if (keyBlockVersion == KeyBlockVersion.D) {
-            optionalBlocks.put(OptionalBlockID.KP,
-                    new OptionalBlock(KCVAlgorithm.CMAC + Bytes.toHexString(Bytes.subBytes(AlgUtil.aesCMACKCV(bpk), 0, 5))));
-        }
+//        // 设置KP
+//        if (keyBlockVersion == KeyBlockVersion.B) {
+//            optionalBlocks.put(OptionalBlockID.KP,
+//                    new OptionalBlock(KCVAlgorithm.LEGACY + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(bpk), 0, 3))));
+//        } else if (keyBlockVersion == KeyBlockVersion.D) {
+//            optionalBlocks.put(OptionalBlockID.KP,
+//                    new OptionalBlock(KCVAlgorithm.CMAC + Bytes.toHexString(Bytes.subBytes(AlgUtil.aesCMACKCV(bpk), 0, 5))));
+//        }
         // 设置KeyHead
         setKeyHead();
         // 设置KeyBlock
@@ -267,9 +267,9 @@ public class TR31 {
         Arrays.fill(bpk, (byte) 0x00);
         // 转ASCII
         byte[] out_ascii = Strings.encode(Bytes.toHexString(out));
-        PrintfUtil.d("Out-ASCII", Bytes.toHexString(out_ascii));
+        PrintfUtil.d("Out-ASCII", new String(out_ascii));
         byte[] mac_ascii = Strings.encode(Bytes.toHexString(mac));
-        PrintfUtil.d("Mac-ASCII", Bytes.toHexString(mac_ascii));
+        PrintfUtil.d("Mac-ASCII", new String(mac_ascii));
         tr31 = Bytes.concat(keyHead, out_ascii, mac_ascii);
         PrintfUtil.d("TR-31", new String(tr31));
         return tr31;
@@ -303,14 +303,14 @@ public class TR31 {
         }
         keyHead = Bytes.concat(keyHead, new byte[]{keyAlgorithm});
         PrintfUtil.d("KeyAlgorithm", (char) keyAlgorithm + "");
-        // 设置KC域
-        if (keyAlgorithm == KeyAlgorithm.TDEA) {
-            optionalBlocks.put(OptionalBlockID.KC,
-                    new OptionalBlock(KCVAlgorithm.LEGACY + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(key), 0, 3))));
-        } else if (keyAlgorithm == KeyAlgorithm.AES) {
-            optionalBlocks.put(OptionalBlockID.KC,
-                    new OptionalBlock(KCVAlgorithm.CMAC + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(key), 0, 3))));
-        }
+//        // 设置KC域
+//        if (keyAlgorithm == KeyAlgorithm.TDEA) {
+//            optionalBlocks.put(OptionalBlockID.KC,
+//                    new OptionalBlock(KCVAlgorithm.LEGACY + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(key), 0, 3))));
+//        } else if (keyAlgorithm == KeyAlgorithm.AES) {
+//            optionalBlocks.put(OptionalBlockID.KC,
+//                    new OptionalBlock(KCVAlgorithm.CMAC + Bytes.toHexString(Bytes.subBytes(AlgUtil.tdesLegacyKCV(key), 0, 3))));
+//        }
         // ModeOfUse
         if (modeOfUse == 0x00) {
             throw new IllegalArgumentException("ModeOfUse not set");

@@ -364,6 +364,14 @@ public class TR31 {
                 PrintfUtil.d("KCV", entry.getValue().getData().substring(2));
                 keyHead = Bytes.concat(keyHead, entry.getKey().getBytes(), entry.getValue().getLength().getBytes(),
                         entry.getValue().getData().getBytes());
+            } else if (entry.getKey().equals(OptionalBlockID.IK)) {
+                if (keyAlgorithm == KeyAlgorithm.AES && entry.getValue().getData().length() == 16) {
+                    PrintfUtil.d("KSN", entry.getValue().getData());
+                    keyHead = Bytes.concat(keyHead, entry.getKey().getBytes(), entry.getValue().getLength().getBytes(),
+                            entry.getValue().getData().getBytes());
+                } else {
+                    throw new IllegalArgumentException("OptionalBlockID IK error");
+                }
             } else {
                 throw new IllegalArgumentException("UnSupport OptionalBlockID " + entry.getKey());
             }
@@ -552,6 +560,8 @@ public class TR31 {
                     PrintfUtil.e("Hash algorithm", optionalBlockData.substring(0, 2));
                 }
                 PrintfUtil.d("HM", optionalBlockData.substring(2));
+            } else if (optionalBlockID.equals(OptionalBlockID.IK)) {
+                PrintfUtil.d("KSN", optionalBlockData);
             } else {
                 PrintfUtil.d("OptionalBlockData", optionalBlockData);
             }

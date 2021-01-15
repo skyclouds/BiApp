@@ -1087,8 +1087,22 @@ public class CertUtil {
                                    SignatureAlgorithm algorithm, PrivateKey privateKey, PublicKey publicKey) {
         String pem = "";
         try {
-            String content = "CN=" + CN + "," + " OU=" + OU + "," + " O=" + O + "," + " L=" + L + "," + " ST=" + ST
-                    + "," + " C=" + C;
+            String content = "CN=" + CN;
+            if (!Strings.isNullOrEmpty(OU)) {
+                content += "," + "OU=" + OU;
+            }
+            if (!Strings.isNullOrEmpty(O)) {
+                content += "," + "O=" + O;
+            }
+            if (!Strings.isNullOrEmpty(L)) {
+                content += "," + "L=" + L;
+            }
+            if (!Strings.isNullOrEmpty(ST)) {
+                content += "," + "ST=" + ST;
+            }
+            if (!Strings.isNullOrEmpty(C)) {
+                content += "," + "C=" + C;
+            }
             if (!Strings.isNullOrEmpty(email)) {
                 content += "," + "EMAIL=" + email;
             }

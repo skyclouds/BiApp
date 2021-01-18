@@ -1104,7 +1104,7 @@ public class CertUtil {
                 content += "," + "C=" + C;
             }
             if (!Strings.isNullOrEmpty(email)) {
-                content += "," + "EMAIL=" + email;
+                content += "," + "EMAILADDRESS=" + email;
             }
             X500Principal subject = new X500Principal(content);
             ContentSigner signGen = new JcaContentSignerBuilder(algorithm.getName()).build(privateKey);

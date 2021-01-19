@@ -1036,6 +1036,48 @@ public class CertUtil {
     }
 
     /**
+     * 公钥转PEM(PKCS8格式)
+     *
+     * @param publicKey
+     * @return
+     */
+    public static String publicKey2PEMByPKCS8(ECPublicKey publicKey) {
+        return Bytes.toPEMString("EC PUBLIC KEY", publicKey2PKCS8(publicKey));
+    }
+
+    /**
+     * 私钥转PEM(PKCS8格式)
+     *
+     * @param privateKey
+     * @return
+     */
+    public static String privateKey2PEMByPKCS8(ECPrivateKey privateKey) {
+        return Bytes.toPEMString("EC PRIVATE KEY", privateKey2PKCS8(privateKey));
+    }
+
+
+    /**
+     * 公钥转PKCS8
+     *
+     * @param publicKey
+     * @returnK
+     */
+    public static byte[] publicKey2PKCS8(ECPublicKey publicKey) {
+        return publicKey.getEncoded();
+    }
+
+    /**
+     * 私钥转PKCS8
+     *
+     * @param privateKey
+     * @return
+     */
+    public static byte[] privateKey2PKCS8(ECPrivateKey privateKey) {
+        return privateKey.getEncoded();
+    }
+
+
+    /**
      * 签名算法
      */
     public enum SignatureAlgorithm {

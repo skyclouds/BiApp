@@ -62,7 +62,7 @@ public class AlgUtil {
     private static final Provider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
     static {
-        Security.addProvider(BOUNCY_CASTLE_PROVIDER);
+        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
     }
 
     /**

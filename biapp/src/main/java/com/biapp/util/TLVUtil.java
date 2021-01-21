@@ -16,13 +16,13 @@ public class TLVUtil {
     public static class TLV {
         private byte[] tag;
         private int length;
-        private byte[] lengthData;
+        private byte[] lenBytes;
         private byte[] value;
         private List<TLV> children = new ArrayList<>();
 
-        public TLV(byte[] tag, byte[] lengthData, int length, byte[] value) {
+        public TLV(byte[] tag, byte[] lenBytes, int length, byte[] value) {
             this.tag = tag;
-            this.lengthData = lengthData;
+            this.lenBytes = lenBytes;
             this.length = length;
             this.value = value;
         }
@@ -65,11 +65,11 @@ public class TLVUtil {
 
         @Override
         public String toString() {
-            return Bytes.toHexString(Bytes.concat(tag, lengthData, value));
+            return Bytes.toHexString(Bytes.concat(tag, lenBytes, value));
         }
 
         public byte[] getBytes(){
-            return Bytes.concat(tag, lengthData, value);
+            return Bytes.concat(tag, lenBytes, value);
         }
     }
 

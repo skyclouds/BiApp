@@ -62,7 +62,7 @@ public class AlgUtil {
     private static final Provider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
     static {
-        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
+        Security.addProvider(BOUNCY_CASTLE_PROVIDER);
     }
 
     /**
@@ -70,7 +70,10 @@ public class AlgUtil {
      */
     public enum SymmetryAlgorithm {
 
-        DES("DES"), TDES("DESede"), AES("AES"), SM4("SM4");
+        DES("DES"),
+        TDES("DESede"),
+        AES("AES"),
+        SM4("SM4");
 
         private String name;
 
@@ -97,7 +100,8 @@ public class AlgUtil {
      */
     public enum SymmetryModel {
 
-        ECB("ECB"), CBC("CBC");
+        ECB("ECB"),
+        CBC("CBC");
 
         private String name;
 
@@ -127,8 +131,7 @@ public class AlgUtil {
         NoPadding("NoPadding"),
         ZeroBytePadding("ZeroBytePadding"),
         PKCS5Padding("PKCS5Padding"),
-        PKCS7Padding("PKCS7Padding"),
-        ISO9797_1Padding("ISO9797-1Padding");
+        PKCS7Padding("PKCS7Padding");
 
         private String name;
 
@@ -257,6 +260,13 @@ public class AlgUtil {
     }
 
     /**
+     * MAC算法填充
+     */
+    public enum MacAlgorithmPadding {
+        Method1, Method2, Method3;
+    }
+
+    /**
      * ISO9797-1 Padding Method 1
      *
      * @param keyBlockSize
@@ -271,13 +281,6 @@ public class AlgUtil {
         } else {
             return data;
         }
-    }
-
-    /**
-     * MAC算法填充
-     */
-    public enum MacAlgorithmPadding {
-        Method1, Method2, Method3;
     }
 
     /**
@@ -308,7 +311,8 @@ public class AlgUtil {
      */
     public static byte[] ISO9797_1Padding_Method3(int keyBlockSize, byte[] data) {
         int dataBitSize = data.length * 8;
-        byte[] paddingStart = Bytes.fromHexString(FormatUtil.addHead('0', keyBlockSize * 2, Integer.toHexString(dataBitSize)));
+        byte[] paddingStart = Bytes
+                .fromHexString(FormatUtil.addHead('0', keyBlockSize * 2, Integer.toHexString(dataBitSize)));
         if (data.length % keyBlockSize != 0) {
             byte[] paddingEnd = new byte[keyBlockSize - data.length % keyBlockSize];
             Arrays.fill(paddingEnd, (byte) 0x00);
@@ -317,7 +321,6 @@ public class AlgUtil {
             return Bytes.concat(paddingStart, data);
         }
     }
-
 
     /**
      * ISO9797-1 MAC Algorithm1
@@ -342,10 +345,10 @@ public class AlgUtil {
             d = Bytes.subBytes(data, round * 8, 8);
             if (round > 0) {
                 d = Bytes.xor(d, h);
-                //PrintfUtil.d("D"+(round+1)+"+"+"H"+(round), Bytes.toHexString(d));
+                // PrintfUtil.d("D"+(round+1)+"+"+"H"+(round), Bytes.toHexString(d));
             }
             h = encrypt(SymmetryAlgorithm.DES, SymmetryModel.CBC, SymmetryPadding.NoPadding, key, iv, d);
-            //PrintfUtil.d("H"+(round+1), Bytes.toHexString(h));
+            // PrintfUtil.d("H"+(round+1), Bytes.toHexString(h));
         }
         return h;
     }
@@ -402,12 +405,65 @@ public class AlgUtil {
             d = Bytes.subBytes(data, round * 8, 8);
             if (round > 0) {
                 d = Bytes.xor(d, h);
-                //PrintfUtil.d("D"+(round+1)+"+"+"H"+(round), Bytes.toHexString(d));
+                // PrintfUtil.d("D"+(round+1)+"+"+"H"+(round), Bytes.toHexString(d));
             }
-            h = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.NoPadding, key, iv, d);
-            //PrintfUtil.d("H"+(round+1), Bytes.toHexString(h));
+            h = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, key, iv, d);
+            // PrintfUtil.d("H"+(round+1), Bytes.toHexString(h));
         }
         return h;
+    }
+
+    /**
+     * TDES MCAC
+     *
+     * @param key
+     * @param data
+     * @return
+     */
+    public static byte[] tdesCMAC(byte[] key, byte[] data) {
+        byte[] cmac = new byte[8];
+        BlockCipher cipher = new DESedeEngine();
+        org.spongycastle.crypto.Mac mac = new CMac(cipher, 64);
+        CipherParameters params = new KeyParameter(key);
+        mac.init(params);
+        mac.update(data, 0, data.length);
+        mac.doFinal(cmac, 0);
+        return cmac;
+    }
+
+    /**
+     * AES MCAC
+     *
+     * @param key
+     * @param data
+     * @return
+     */
+    public static byte[] aesCMAC(byte[] key, byte[] data) {
+        byte[] cmac = new byte[16];
+        BlockCipher cipher = new AESEngine();
+        org.spongycastle.crypto.Mac mac = new CMac(cipher, 128);
+        CipherParameters params = new KeyParameter(key);
+        mac.init(params);
+        mac.update(data, 0, data.length);
+        mac.doFinal(cmac, 0);
+        return cmac;
+    }
+
+    /**
+     * HMAC
+     *
+     * @param digest
+     * @param key
+     * @param data
+     */
+    public static byte[] hmac(Digest digest, byte[] key, byte[] data) {
+        HMac hmac = new HMac(digest);
+        hmac.init(new KeyParameter(key));
+        hmac.update(data, 0, data.length);
+        byte[] result = new byte[hmac.getMacSize()];
+        hmac.doFinal(result, 0);
+        return result;
     }
 
     /**
@@ -465,59 +521,6 @@ public class AlgUtil {
     }
 
     /**
-     * TDES MCAC
-     *
-     * @param key
-     * @param data
-     * @return
-     */
-    public static byte[] tdesCMAC(byte[] key, byte[] data) {
-        byte[] cmac = new byte[8];
-        BlockCipher cipher = new DESedeEngine();
-        org.spongycastle.crypto.Mac mac = new CMac(cipher, 64);
-        CipherParameters params = new KeyParameter(key);
-        mac.init(params);
-        mac.update(data, 0, data.length);
-        mac.doFinal(cmac, 0);
-        return cmac;
-    }
-
-    /**
-     * AES MCAC
-     *
-     * @param key
-     * @param data
-     * @return
-     */
-    public static byte[] aesCMAC(byte[] key, byte[] data) {
-        byte[] cmac = new byte[16];
-        BlockCipher cipher = new AESEngine();
-        org.spongycastle.crypto.Mac mac = new CMac(cipher, 128);
-        CipherParameters params = new KeyParameter(key);
-        mac.init(params);
-        mac.update(data, 0, data.length);
-        mac.doFinal(cmac, 0);
-        return cmac;
-    }
-
-    /**
-     * HMAC算法
-     *
-     * @param digest
-     * @param key
-     * @param data
-     * @return
-     */
-    public static byte[] hmac(Digest digest, byte[] key, byte[] data) {
-        HMac hmac = new HMac(digest);
-        hmac.init(new KeyParameter(key));
-        hmac.update(data, 0, data.length);
-        byte[] result = new byte[hmac.getMacSize()];
-        hmac.doFinal(result, 0);
-        return result;
-    }
-
-    /**
      * Ingenic HMAC Key Check Value
      *
      * @param key
@@ -536,17 +539,17 @@ public class AlgUtil {
     }
 
     /**
-     * Ingenic Data Check Value
-     * Secret Client Data are non-PCI data.
-     * They are used by customers to store proprietary data which are not keys.
-     * However, these client data need to be kept secret.
-     * For instance, these data can be serial numbers, key derivation constant etc...
+     * Ingenic Data Check Value Secret Client Data are non-PCI data. They are used
+     * by customers to store proprietary data which are not keys. However, these
+     * client data need to be kept secret. For instance, these data can be serial
+     * numbers, key derivation constant etc...
      * <p>
-     * Cleartext Client Data are non-PCI data.
-     * They are used by customers to store proprietary data which are not keys and not sensitive.
-     * For instance, these data can be a text or a random value that need to be stored.
-     * Check Values for Cleartext Client Data use the technique where the check value is calculated by Hashing the secret client data using the SHA-256 algorithm.
-     * The check value is the leftmost 6 hexadecimal digits (3 bytes).
+     * Cleartext Client Data are non-PCI data. They are used by customers to store
+     * proprietary data which are not keys and not sensitive. For instance, these
+     * data can be a text or a random value that need to be stored. Check Values for
+     * Cleartext Client Data use the technique where the check value is calculated
+     * by Hashing the secret client data using the SHA-256 algorithm. The check
+     * value is the leftmost 6 hexadecimal digits (3 bytes).
      *
      * @param data
      * @param secret
@@ -554,12 +557,12 @@ public class AlgUtil {
      */
     public static byte[] ingenicDCV(byte[] data, boolean secret) {
         if (!secret) {
-            return hash(AlgUtil.HashAlgorithm.SHA256, data);
+            return hash(HashAlgorithm.SHA256, data);
         } else {
             if (data.length == 8) {
                 return desLegacyKCV(data);
             } else if (data.length >= 16) {
-                return AlgUtil.hash(AlgUtil.HashAlgorithm.SHA256, data);
+                return hash(HashAlgorithm.SHA256, data);
             } else {
                 throw new IllegalArgumentException("data length error");
             }
@@ -590,8 +593,7 @@ public class AlgUtil {
         ik = encrypt(SymmetryAlgorithm.TDES, SymmetryModel.ECB, SymmetryPadding.NoPadding, bdk, null, ksnTmp);
         // bdk与makeEBdk异或
         byte[] xorTmp = Bytes.xor(bdk, makeEBdk);
-        xorTmp = encrypt(SymmetryAlgorithm.TDES, SymmetryModel.ECB, SymmetryPadding.NoPadding, xorTmp, null,
-                ksnTmp);
+        xorTmp = encrypt(SymmetryAlgorithm.TDES, SymmetryModel.ECB, SymmetryPadding.NoPadding, xorTmp, null, ksnTmp);
         ik = Bytes.concat(ik, xorTmp);
         return ik;
     }
@@ -654,8 +656,8 @@ public class AlgUtil {
         derivData[7] = keyLength[1];
         System.arraycopy(ksnTmp, 0, derivData, 8, 8);
         for (int i = 0; i < blockNum; i++) {
-            byte[] result = encrypt(SymmetryAlgorithm.AES, SymmetryModel.ECB, SymmetryPadding.NoPadding, bdk,
-                    null, derivData);
+            byte[] result = encrypt(SymmetryAlgorithm.AES, SymmetryModel.ECB, SymmetryPadding.NoPadding, bdk, null,
+                    derivData);
             if (Bytes.isNullOrEmpty(ik)) {
                 ik = result;
             } else {
@@ -713,17 +715,6 @@ public class AlgUtil {
     }
 
     /**
-     * 获得随机数
-     *
-     * @param len
-     * @return
-     */
-    public static byte[] getRandom(int len) {
-        return new SecureRandom().generateSeed(len);
-    }
-
-
-    /**
      * 非对称填充
      */
     public enum AsymmetricPadding {
@@ -767,7 +758,7 @@ public class AlgUtil {
         KeyPair keyPair = null;
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            BigInteger publicExponent = new BigInteger(exponent + "", 10);
+            BigInteger publicExponent = new BigInteger(Integer.toHexString(exponent), 16);
             RSAKeyGenParameterSpec parameterSpec = new RSAKeyGenParameterSpec(modulus, publicExponent);
             generator.initialize(parameterSpec, new SecureRandom());
             keyPair = generator.generateKeyPair();
@@ -862,30 +853,22 @@ public class AlgUtil {
             Signature signature = Signature.getInstance(type.getName());
             if (type.getName().endsWith("PSS")) {
                 if (type.equals(RSASignType.SHA256withRSA_PSS.getName())) {
-                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA256.getDigestAlgorithm(),
-                            "MGF1",
-                            MGF1ParameterSpec.SHA256,
-                            32,
-                            1));
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA256.getDigestAlgorithm(), "MGF1",
+                            MGF1ParameterSpec.SHA256, 32, 1));
                 } else if (type.equals(RSASignType.SHA384withRSA_PSS.getName())) {
-                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA384.getDigestAlgorithm(),
-                            "MGF1",
-                            MGF1ParameterSpec.SHA384,
-                            48,
-                            1));
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA384.getDigestAlgorithm(), "MGF1",
+                            MGF1ParameterSpec.SHA384, 48, 1));
                 } else if (type.equals(RSASignType.SHA512withRSA_PSS.getName())) {
-                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA512.getDigestAlgorithm(),
-                            "MGF1",
-                            MGF1ParameterSpec.SHA512,
-                            64,
-                            1));
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA512.getDigestAlgorithm(), "MGF1",
+                            MGF1ParameterSpec.SHA512, 64, 1));
                 }
             }
             signature.initSign(privateKey);
             signature.update(data);
             byte[] signed = signature.sign();
             return signed;
-        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | SignatureException e) {
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException
+                | SignatureException e) {
             e.printStackTrace();
         }
         return null;
@@ -905,29 +888,21 @@ public class AlgUtil {
             Signature signature = Signature.getInstance(type.getName());
             if (type.getName().endsWith("PSS")) {
                 if (type.equals(RSASignType.SHA256withRSA_PSS.getName())) {
-                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA256.getDigestAlgorithm(),
-                            "MGF1",
-                            MGF1ParameterSpec.SHA256,
-                            32,
-                            1));
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA256.getDigestAlgorithm(), "MGF1",
+                            MGF1ParameterSpec.SHA256, 32, 1));
                 } else if (type.equals(RSASignType.SHA384withRSA_PSS.getName())) {
-                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA384.getDigestAlgorithm(),
-                            "MGF1",
-                            MGF1ParameterSpec.SHA384,
-                            48,
-                            1));
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA384.getDigestAlgorithm(), "MGF1",
+                            MGF1ParameterSpec.SHA384, 48, 1));
                 } else if (type.equals(RSASignType.SHA512withRSA_PSS.getName())) {
-                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA512.getDigestAlgorithm(),
-                            "MGF1",
-                            MGF1ParameterSpec.SHA512,
-                            64,
-                            1));
+                    signature.setParameter(new PSSParameterSpec(MGF1ParameterSpec.SHA512.getDigestAlgorithm(), "MGF1",
+                            MGF1ParameterSpec.SHA512, 64, 1));
                 }
             }
             signature.initVerify(publicKey);
             signature.update(data);
             return signature.verify(signed);
-        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | SignatureException e) {
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException
+                | SignatureException e) {
             e.printStackTrace();
         }
         return false;
@@ -938,9 +913,17 @@ public class AlgUtil {
      */
     public enum ECCCurve {
 
-        secp224r1("secp224r1", 2), secp256r1("secp256r1", 3), secp384r1("secp384r1", 4), secp521r1("secp521r1", 5),
-        brainpoolp256r1("brainpoolp256r1", 6), brainpoolp384r1("brainpoolp384r1", 7), brainpoolp512r1("brainpoolp512r1", 8),
-        P_224("P-224", 2), P_256("P-256", 3), P_384("P-384", 4), P_521("P-521", 5);
+        secp224r1("secp224r1", 2),
+        secp256r1("secp256r1", 3),
+        secp384r1("secp384r1", 4),
+        secp521r1("secp521r1", 5),
+        brainpoolp256r1("brainpoolp256r1", 6),
+        brainpoolp384r1("brainpoolp384r1", 7),
+        brainpoolp512r1("brainpoolp512r1", 8),
+        P_224("P-224", 2),
+        P_256("P-256", 3),
+        P_384("P-384", 4),
+        P_521("P-521", 5);
 
         private String name;
         private int value;
@@ -995,7 +978,10 @@ public class AlgUtil {
      * ECC签名方式
      */
     public enum ECCSignType {
-        NONEwithECDSA("NONEwithECDSA"), SHA256withECDSA("SHA256withECDSA"), SHA384withECDSA("SHA384withECDSA"), SHA512withECDSA("SHA512withECDSA");
+        NONEwithECDSA("NONEwithECDSA"),
+        SHA256withECDSA("SHA256withECDSA"),
+        SHA384withECDSA("SHA384withECDSA"),
+        SHA512withECDSA("SHA512withECDSA");
 
         private String name;
 
@@ -1037,163 +1023,6 @@ public class AlgUtil {
         }
         return null;
     }
-
-    /**
-     * ECC签名验证
-     *
-     * @param type
-     * @param publicKey
-     * @param data
-     * @param signed
-     * @return
-     */
-    public static boolean ECCSignVerify(ECCSignType type, ECPublicKey publicKey, byte[] data, byte[] signed) {
-        try {
-            Signature signature = Signature.getInstance(type.getName());
-            signature.initVerify(publicKey);
-            signature.update(data);
-            return signature.verify(signed);
-        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    /**
-     * 获得共享密钥
-     *
-     * @param myPrivateKey
-     * @param otherPublicKey
-     * @return
-     */
-    public static byte[] getShareKey(ECPrivateKey myPrivateKey, ECPublicKey otherPublicKey) {
-        byte[] shareKey = null;
-        try {
-            KeyAgreement agreement = KeyAgreement.getInstance("ECDH");
-            agreement.init(myPrivateKey);
-            agreement.doPhase(otherPublicKey, true);
-            shareKey = agreement.generateSecret();
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        return shareKey;
-    }
-
-    /**
-     * HKDF
-     *
-     * @param digest
-     * @param salt
-     * @param info
-     * @param ikm
-     * @param keyLen
-     * @return
-     */
-    public static byte[] hkdf(Digest digest, byte[] salt, byte[] info, byte[] ikm, int keyLen) {
-        HKDFBytesGenerator hkdf = new HKDFBytesGenerator(digest);
-        HKDFParameters params = new HKDFParameters(ikm, salt, info);
-        hkdf.init(params);
-        byte[] okm = new byte[keyLen];
-        hkdf.generateBytes(okm, 0, keyLen);
-        return okm;
-    }
-
-    /**
-     * Ingenic ECDH 派生密钥类型
-     */
-    public enum IngenicECDHDerivedKeyType {
-        KeyBlockProtect("KeyBlockProtect"), DataEncryption("DataEncryption"), MesAuthentCode("MesAuthentCode");
-
-        private String name;
-
-        private IngenicECDHDerivedKeyType(final String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-    }
-
-    /**
-     * Ingenic ECDH 派生密钥算法
-     */
-    public enum IngenicECDHDerivedKeyAlgorithm {
-        TDES24("TDES24"), AES128("AES128"), AES192("AES192"), AES256("AES256");
-
-        private String name;
-
-        private IngenicECDHDerivedKeyAlgorithm(final String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-    }
-
-    /**
-     * Ingenic ECDH 派生算法
-     *
-     * @param shareKey
-     * @param KDHPublickKeyHex
-     * @param KRDRandom
-     * @param KDHRandom
-     * @param keyType
-     * @param algorithm
-     * @return
-     */
-    public static byte[] ingenicECDH(byte[] shareKey, String KDHPublickKeyHex, byte[] KRDRandom, byte[] KDHRandom,
-                                     IngenicECDHDerivedKeyType keyType, IngenicECDHDerivedKeyAlgorithm algorithm) {
-        byte[] separator = new byte[]{0x00};
-        ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDHPublickKeyHex);
-        byte[] KDHPub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
-        byte[] extractionResult = hmac(new SHA256Digest(), KDHPub_X, shareKey);
-        byte[] context = Bytes.concat(new byte[]{0x01}, "KDK".getBytes(), separator, KDHPub_X, KRDRandom, KDHRandom,
-                Bytes.fromInt(256, 2));
-        byte[] keyMaterial = hmac(new SHA256Digest(), extractionResult, context);
-        byte[] keyInfo = null;
-        int keyBitLength = 128;
-        if (algorithm == IngenicECDHDerivedKeyAlgorithm.TDES24) {
-            keyInfo = new byte[]{0x00, 0x01, 0x00, (byte) 0xC0};
-            keyBitLength = 192;
-        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES128) {
-            keyInfo = new byte[]{0x00, 0x02, 0x00, (byte) 0x80};
-            keyBitLength = 128;
-        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES192) {
-            keyInfo = new byte[]{0x00, 0x03, 0x00, (byte) 0xC0};
-            keyBitLength = 192;
-        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES256) {
-            keyInfo = new byte[]{0x00, 0x04, 0x01, 0x00};
-            keyBitLength = 256;
-        } else {
-            throw new IllegalArgumentException("IngenicECDHDerivedKey Algorithm unknown");
-        }
-        context = Bytes.concat(new byte[]{0x01, 0x00, 0x00, 0x00}, Strings.encode(keyType.getName()), separator,
-                keyInfo, Bytes.fromInt(keyBitLength, 4, Bytes.ENDIAN.LITTLE_ENDIAN));
-        byte[] derivedKey = hmac(new SHA512Digest(), keyMaterial, context);
-        derivedKey = Bytes.subBytes(derivedKey, 0, keyBitLength / 8);
-        return derivedKey;
-    }
-
 
     /**
      * 解析ECC签名数据得到R/S
@@ -1263,5 +1092,147 @@ public class AlgUtil {
             byte[] signed = Bytes.concat(tagR, lenR, R, tagS, lenS, S);
             return Bytes.concat(tag, Bytes.getDERLen(signed.length), signed);
         }
+    }
+
+    /**
+     * ECC签名验证
+     *
+     * @param type
+     * @param publicKey
+     * @param data
+     * @param signed
+     * @return
+     */
+    public static boolean ECCSignVerify(ECCSignType type, ECPublicKey publicKey, byte[] data, byte[] signed) {
+        try {
+            Signature signature = Signature.getInstance(type.getName());
+            signature.initVerify(publicKey);
+            signature.update(data);
+            return signature.verify(signed);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * 获得共享密钥
+     *
+     * @param myPrivateKey
+     * @param otherPublicKey
+     * @return
+     */
+    public static byte[] getShareKey(ECPrivateKey myPrivateKey, ECPublicKey otherPublicKey) {
+        byte[] shareKey = null;
+        try {
+            KeyAgreement agreement = KeyAgreement.getInstance("ECDH");
+            agreement.init(myPrivateKey);
+            agreement.doPhase(otherPublicKey, true);
+            shareKey = agreement.generateSecret();
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return shareKey;
+    }
+
+    /**
+     * HKDF
+     *
+     * @param digest
+     * @param salt
+     * @param info
+     * @param ikm
+     * @param keyLen
+     * @return
+     */
+    public static byte[] hkdf(Digest digest, byte[] salt, byte[] info, byte[] ikm, int keyLen) {
+        HKDFBytesGenerator hkdf = new HKDFBytesGenerator(digest);
+        HKDFParameters params = new HKDFParameters(ikm, salt, info);
+        hkdf.init(params);
+        byte[] okm = new byte[keyLen];
+        hkdf.generateBytes(okm, 0, keyLen);
+        return okm;
+    }
+
+    /**
+     * Ingenic ECDH 派生密钥类型
+     */
+    public enum IngenicECDHDerivedKeyType {
+        KeyBlockProtect("KeyBlockProtect"),
+        DataEncryption("DataEncryption"),
+        MesAuthentCode("MesAuthentCode");
+
+        private String name;
+
+        private IngenicECDHDerivedKeyType(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
+
+    /**
+     * Ingenic ECDH 派生密钥算法
+     */
+    public enum IngenicECDHDerivedKeyAlgorithm {
+        TDES24,
+        AES128,
+        AES192,
+        AES256
+    }
+
+    /**
+     * Ingenic ECDH 派生算法
+     *
+     * @param shareKey
+     * @param KDHPublickKeyHex
+     * @param KRDRandom
+     * @param KDHRandom
+     * @param keyType
+     * @param algorithm
+     * @return
+     */
+    public static byte[] ingenicECDH(byte[] shareKey, String KDHPublickKeyHex, byte[] KRDRandom, byte[] KDHRandom,
+                                     IngenicECDHDerivedKeyType keyType, IngenicECDHDerivedKeyAlgorithm algorithm) {
+        byte[] separator = new byte[]{0x00};
+        ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDHPublickKeyHex);
+        byte[] KDHPub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
+        byte[] extractionResult = AlgUtil.hmac(new SHA256Digest(), KDHPub_X, shareKey);
+        byte[] context = Bytes.concat(new byte[]{0x01}, "KDK".getBytes(), separator, KDHPub_X, KRDRandom, KDHRandom,
+                Bytes.fromInt(256, 2));
+        byte[] keyMaterial = AlgUtil.hmac(new SHA256Digest(), extractionResult, context);
+        byte[] keyInfo = null;
+        int keyBitLength = 128;
+        if (algorithm == IngenicECDHDerivedKeyAlgorithm.TDES24) {
+            keyInfo = new byte[]{0x00, 0x01, 0x00, (byte) 0xC0};
+            keyBitLength = 192;
+        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES128) {
+            keyInfo = new byte[]{0x00, 0x02, 0x00, (byte) 0x80};
+            keyBitLength = 128;
+        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES192) {
+            keyInfo = new byte[]{0x00, 0x03, 0x00, (byte) 0xC0};
+            keyBitLength = 192;
+        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES256) {
+            keyInfo = new byte[]{0x00, 0x04, 0x01, 0x00};
+            keyBitLength = 256;
+        } else {
+            throw new IllegalArgumentException("IngenicECDHDerivedKey Algorithm unknown");
+        }
+        context = Bytes.concat(new byte[]{0x01, 0x00, 0x00, 0x00}, Strings.encode(keyType.getName()), separator,
+                keyInfo, Bytes.fromInt(keyBitLength, 4, Bytes.ENDIAN.LITTLE_ENDIAN));
+        byte[] derivedKey = AlgUtil.hmac(new SHA512Digest(), keyMaterial, context);
+        derivedKey = Bytes.subBytes(derivedKey, 0, keyBitLength / 8);
+        return derivedKey;
     }
 }

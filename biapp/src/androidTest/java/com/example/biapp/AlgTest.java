@@ -33,7 +33,7 @@ public class AlgTest {
         byte[] key32 = new byte[32];
         byte[] iv8 = new byte[8];
         byte[] iv16 = new byte[16];
-        byte[] data = AlgUtil.getRandom(125);
+        byte[] data = new SecureRandom().generateSeed(125);
         byte[] encrypt_DES = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.DES,
                 AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.ZeroBytePadding, key8, iv8, data);
         byte[] encrypt_TDES = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES,
@@ -41,7 +41,7 @@ public class AlgTest {
         byte[] encrypt_AES = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.AES,
                 AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.ZeroBytePadding, key32, iv16, data);
         byte[] encrypt_SM4 = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.SM4,
-                AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.ISO9797_1Padding, key16, iv16, data);
+                AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.PKCS5Padding, key16, iv16, data);
 
         PrintfUtil.d("DES",
                 "" + Bytes.toHexString(AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.DES,
@@ -57,13 +57,13 @@ public class AlgTest {
                         encrypt_AES)).equals(Bytes.toHexString(data)));
         PrintfUtil.d("SM4",
                 "" + Bytes.toHexString(AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.SM4,
-                        AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.ISO9797_1Padding, key16,
+                        AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.PKCS5Padding, key16,
                         iv16, encrypt_SM4)).equals(Bytes.toHexString(data)));
     }
 
     @Test
     public void hashTest() {
-        byte[] data = AlgUtil.getRandom(125);
+        byte[] data = new SecureRandom().generateSeed(125);
         PrintfUtil.d("SHA256", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA256, data)));
         PrintfUtil.d("SHA384", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA384, data)));
         PrintfUtil.d("SHA512", Bytes.toHexString(AlgUtil.hash(AlgUtil.HashAlgorithm.SHA512, data)));

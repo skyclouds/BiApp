@@ -1,7 +1,5 @@
 package com.biapp.key;
 
-import com.biapp.util.FormatUtil;
-
 /**
  * @author yun
  */
@@ -16,13 +14,13 @@ public class OptionalBlock {
      */
     private String data;
 
-    public OptionalBlock(String data){
-        this.data=data;
+    public OptionalBlock(String data) {
+        this.data = data;
     }
 
     public String getLength() {
         //OptionalBlock ID(2AN)+Optional Block Length(2H)+Optional Block Data(PA)
-        return FormatUtil.addHead('0',2,Integer.toHexString(2+2+data.length()));
+        return String.format("%02x", 2 + 2 + data.length()).toUpperCase();
     }
 
     public String getData() {

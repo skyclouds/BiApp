@@ -1,9 +1,9 @@
 package com.biapp.key;
 
 import com.biapp.util.AlgUtil;
-import com.biapp.util.FormatUtil;
 import com.biapp.util.PrintfUtil;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -286,7 +286,7 @@ public class TR31 {
         keyHead = new byte[]{keyBlockVersion};
         PrintfUtil.d("KeyBlockVersion", (char) keyBlockVersion + "");
         // TR31包长度
-        byte[] tr31LenData = FormatUtil.addHead('0', 4, tr31Length + "").getBytes();
+        byte[] tr31LenData = String.format("%04d", tr31Length).getBytes();
         keyHead = Bytes.concat(keyHead, tr31LenData);
         // KeyUsage
         if (Strings.isNullOrEmpty(keyUsage)) {
@@ -341,7 +341,7 @@ public class TR31 {
         }
         short optionalNum = (short) optionalBlocks.size();
         PrintfUtil.d("OptionalNum", optionalNum + "");
-        keyHead = Bytes.concat(keyHead, FormatUtil.addHead('0', 2, optionalNum + "").getBytes());
+        keyHead = Bytes.concat(keyHead, String.format("%02d", optionalNum).getBytes());
         // 预留域
         PrintfUtil.d("Reserved", reserved);
         keyHead = Bytes.concat(keyHead, reserved.getBytes());
@@ -394,7 +394,7 @@ public class TR31 {
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             paddingLen = 16 - (2 + key.length) % 16;
         }
-        keyBlockRandom = AlgUtil.getRandom(paddingLen);
+        keyBlockRandom = new SecureRandom().generateSeed(paddingLen);
         PrintfUtil.d("KeyBlockRandom", Bytes.toHexString(keyBlockRandom));
         keyBlock = Bytes.concat(Bytes.fromInt(keyLen, 2), key, keyBlockRandom);
         PrintfUtil.d("KeyBlock", Bytes.toHexString(keyBlock));
@@ -410,7 +410,7 @@ public class TR31 {
         if (keyBlockVersion == KeyBlockVersion.B) {
             macKey = desDeriveMacKey(bpk);
             tr31Length = keyHead.length + keyBlock.length * 2 + KEY_BLOCK_VERSION_B_MAC_LENGTH;
-            byte[] tr31LenData = FormatUtil.addHead('0', 4, tr31Length + "").getBytes();
+            byte[] tr31LenData = String.format("%04d", tr31Length).getBytes();
             keyHead[1] = tr31LenData[0];
             keyHead[2] = tr31LenData[1];
             keyHead[3] = tr31LenData[2];
@@ -419,7 +419,7 @@ public class TR31 {
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             macKey = aesDeriveMacKey(bpk);
             tr31Length = keyHead.length + keyBlock.length * 2 + KEY_BLOCK_VERSION_D_MAC_LENGTH;
-            byte[] tr31LenData = FormatUtil.addHead('0', 4, tr31Length + "").getBytes();
+            byte[] tr31LenData = String.format("%04d", tr31Length).getBytes();
             keyHead[1] = tr31LenData[0];
             keyHead[2] = tr31LenData[1];
             keyHead[3] = tr31LenData[2];

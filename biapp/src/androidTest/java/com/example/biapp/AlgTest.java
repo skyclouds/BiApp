@@ -1,15 +1,17 @@
 package com.example.biapp;
 
+import android.util.Log;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.biapp.util.AlgUtil;
 import com.biapp.util.CertUtil;
 import com.biapp.util.PrintfUtil;
 
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.digests.SHA512Digest;
 
 import java.security.KeyPair;
 import java.security.SecureRandom;
@@ -126,30 +128,27 @@ public class AlgTest {
 
     @Test
     public void rsaHexTest() {
-        for (int i = 0; i < 1000; i++) {
-            PrintfUtil.d("checkRound", (i + 1) + "");
-            byte[] hash = new SecureRandom().generateSeed(32);
-            KeyPair keyPair = AlgUtil.generateRSAKeyPair(2048, 3);
-            String publickHex = Bytes
-                    .toHexString(CertUtil.RSAPublicKey2Hex((RSAPublicKey) keyPair.getPublic()));
-            PrintfUtil.d("pub", publickHex);
-            String privateHex = Bytes.toHexString(
-                    CertUtil.RSAPrivateCrtKey2Hex((RSAPrivateCrtKey) keyPair.getPrivate()));
-            PrintfUtil.d("pri", privateHex);
-            byte[] signed1 = AlgUtil.RSASign(AlgUtil.RSASignType.NONEwithRSA,
-                    (RSAPrivateCrtKey) keyPair.getPrivate(), hash);
-            boolean check1 = AlgUtil.RSASignVerify(AlgUtil.RSASignType.NONEwithRSA,
-                    CertUtil.hex2RSAPublicKey(publickHex), hash, signed1);
-            if (!check1) {
-                PrintfUtil.e("check1", check1 + "");
-            }
-            byte[] signed2 = AlgUtil.RSASign(AlgUtil.RSASignType.NONEwithRSA,
-                    CertUtil.hex2RSAPrivateKey(privateHex), hash);
-            boolean check2 = AlgUtil.RSASignVerify(AlgUtil.RSASignType.NONEwithRSA,
-                    (RSAPublicKey) keyPair.getPublic(), hash, signed2);
-            if (!check2) {
-                PrintfUtil.e("check2", check2 + "");
-            }
+        byte[] hash = new SecureRandom().generateSeed(32);
+        KeyPair keyPair = AlgUtil.generateRSAKeyPair(2048, 3);
+        String publickHex = Bytes
+                .toHexString(CertUtil.RSAPublicKey2Hex((RSAPublicKey) keyPair.getPublic()));
+        PrintfUtil.d("pub", publickHex);
+        String privateHex = Bytes.toHexString(
+                CertUtil.RSAPrivateCrtKey2Hex((RSAPrivateCrtKey) keyPair.getPrivate()));
+        PrintfUtil.d("pri", privateHex);
+        byte[] signed1 = AlgUtil.RSASign(AlgUtil.RSASignType.NONEwithRSA,
+                (RSAPrivateCrtKey) keyPair.getPrivate(), hash);
+        boolean check1 = AlgUtil.RSASignVerify(AlgUtil.RSASignType.NONEwithRSA,
+                CertUtil.hex2RSAPublicKey(publickHex), hash, signed1);
+        if (!check1) {
+            PrintfUtil.e("check1", check1 + "");
+        }
+        byte[] signed2 = AlgUtil.RSASign(AlgUtil.RSASignType.NONEwithRSA,
+                CertUtil.hex2RSAPrivateKey(privateHex), hash);
+        boolean check2 = AlgUtil.RSASignVerify(AlgUtil.RSASignType.NONEwithRSA,
+                (RSAPublicKey) keyPair.getPublic(), hash, signed2);
+        if (!check2) {
+            PrintfUtil.e("check2", check2 + "");
         }
     }
 
@@ -191,22 +190,19 @@ public class AlgTest {
     @Test
     public void eccHexTest() {
         AlgUtil.ECCCurve eccCurve = AlgUtil.ECCCurve.secp256r1;
-        for (int i = 0; i < 1000; i++) {
-            PrintfUtil.d("checkRound", (i + 1) + "");
-            byte[] hash = new SecureRandom().generateSeed(32);
-            KeyPair eccKeyPairs = AlgUtil.generateECCKeyPair(eccCurve);
-            String publickHex = Bytes.toHexString(CertUtil.ECPublicKey2Hex((ECPublicKey) eccKeyPairs.getPublic()));
-            String privateHex = Bytes.toHexString(CertUtil.ECPrivateKey2Hex((ECPrivateKey) eccKeyPairs.getPrivate()));
-            byte[] signed1 = AlgUtil.ECCSign(AlgUtil.ECCSignType.NONEwithECDSA, (ECPrivateKey) eccKeyPairs.getPrivate(), hash);
-            boolean check1 = AlgUtil.ECCSignVerify(AlgUtil.ECCSignType.NONEwithECDSA, CertUtil.hex2ECPublicKey(eccCurve, publickHex), hash, signed1);
-            if (!check1) {
-                PrintfUtil.e("check1", check1 + "");
-            }
-            byte[] signed2 = AlgUtil.ECCSign(AlgUtil.ECCSignType.NONEwithECDSA, CertUtil.hex2ECPrivateKey(eccCurve, privateHex), hash);
-            boolean check2 = AlgUtil.ECCSignVerify(AlgUtil.ECCSignType.NONEwithECDSA, (ECPublicKey) eccKeyPairs.getPublic(), hash, signed2);
-            if (!check2) {
-                PrintfUtil.e("check2", check2 + "");
-            }
+        byte[] hash = new SecureRandom().generateSeed(32);
+        KeyPair eccKeyPairs = AlgUtil.generateECCKeyPair(eccCurve);
+        String publickHex = Bytes.toHexString(CertUtil.ECPublicKey2Hex((ECPublicKey) eccKeyPairs.getPublic()));
+        String privateHex = Bytes.toHexString(CertUtil.ECPrivateKey2Hex((ECPrivateKey) eccKeyPairs.getPrivate()));
+        byte[] signed1 = AlgUtil.ECCSign(AlgUtil.ECCSignType.NONEwithECDSA, (ECPrivateKey) eccKeyPairs.getPrivate(), hash);
+        boolean check1 = AlgUtil.ECCSignVerify(AlgUtil.ECCSignType.NONEwithECDSA, CertUtil.hex2ECPublicKey(eccCurve, publickHex), hash, signed1);
+        if (!check1) {
+            PrintfUtil.e("check1", check1 + "");
+        }
+        byte[] signed2 = AlgUtil.ECCSign(AlgUtil.ECCSignType.NONEwithECDSA, CertUtil.hex2ECPrivateKey(eccCurve, privateHex), hash);
+        boolean check2 = AlgUtil.ECCSignVerify(AlgUtil.ECCSignType.NONEwithECDSA, (ECPublicKey) eccKeyPairs.getPublic(), hash, signed2);
+        if (!check2) {
+            PrintfUtil.e("check2", check2 + "");
         }
     }
 

@@ -4,17 +4,17 @@ import com.biapp.util.AlgUtil;
 import com.biapp.util.FormatUtil;
 import com.biapp.util.TLVUtil;
 
-import org.spongycastle.jce.ECNamedCurveTable;
-import org.spongycastle.jce.provider.BouncyCastleProvider;
-import org.spongycastle.jce.spec.ECParameterSpec;
-import org.spongycastle.jce.spec.ECPrivateKeySpec;
-import org.spongycastle.jce.spec.ECPublicKeySpec;
-import org.spongycastle.operator.ContentSigner;
-import org.spongycastle.operator.OperatorCreationException;
-import org.spongycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.spongycastle.pkcs.PKCS10CertificationRequest;
-import org.spongycastle.pkcs.PKCS10CertificationRequestBuilder;
-import org.spongycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.jce.spec.ECPrivateKeySpec;
+import org.bouncycastle.jce.spec.ECPublicKeySpec;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
+import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -61,7 +61,9 @@ public class CertUtil {
     private static final Provider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
     static {
-        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
+        // remove BC provider first
+        Security.removeProvider("BC");
+        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 0);
     }
 
     /**

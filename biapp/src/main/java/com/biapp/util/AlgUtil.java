@@ -1,23 +1,23 @@
 package com.biapp.util;
 
-import org.spongycastle.crypto.BlockCipher;
-import org.spongycastle.crypto.CipherParameters;
-import org.spongycastle.crypto.Digest;
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.digests.SHA384Digest;
-import org.spongycastle.crypto.digests.SHA512Digest;
-import org.spongycastle.crypto.engines.AESEngine;
-import org.spongycastle.crypto.engines.DESEngine;
-import org.spongycastle.crypto.engines.DESedeEngine;
-import org.spongycastle.crypto.generators.HKDFBytesGenerator;
-import org.spongycastle.crypto.macs.CMac;
-import org.spongycastle.crypto.macs.HMac;
-import org.spongycastle.crypto.macs.ISO9797Alg3Mac;
-import org.spongycastle.crypto.params.HKDFParameters;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.jce.ECNamedCurveTable;
-import org.spongycastle.jce.provider.BouncyCastleProvider;
-import org.spongycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.crypto.BlockCipher;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.digests.SHA384Digest;
+import org.bouncycastle.crypto.digests.SHA512Digest;
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.engines.DESEngine;
+import org.bouncycastle.crypto.engines.DESedeEngine;
+import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
+import org.bouncycastle.crypto.macs.CMac;
+import org.bouncycastle.crypto.macs.HMac;
+import org.bouncycastle.crypto.macs.ISO9797Alg3Mac;
+import org.bouncycastle.crypto.params.HKDFParameters;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -62,7 +62,9 @@ public class AlgUtil {
     private static final Provider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
     static {
-        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
+        // remove BC provider first
+        Security.removeProvider("BC");
+        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 0);
     }
 
     /**
@@ -374,7 +376,7 @@ public class AlgUtil {
             data = ISO9797_1Padding_Method3(8, data);
         }
         BlockCipher cipher = new DESEngine();
-        org.spongycastle.crypto.Mac mac = new ISO9797Alg3Mac(cipher, 64);
+        org.bouncycastle.crypto.Mac mac = new ISO9797Alg3Mac(cipher, 64);
         KeyParameter keyParameter = new KeyParameter(key);
         mac.init(keyParameter);
         mac.update(data, 0, data.length);
@@ -424,7 +426,7 @@ public class AlgUtil {
     public static byte[] tdesCMAC(byte[] key, byte[] data) {
         byte[] cmac = new byte[8];
         BlockCipher cipher = new DESedeEngine();
-        org.spongycastle.crypto.Mac mac = new CMac(cipher, 64);
+        org.bouncycastle.crypto.Mac mac = new CMac(cipher, 64);
         CipherParameters params = new KeyParameter(key);
         mac.init(params);
         mac.update(data, 0, data.length);
@@ -442,7 +444,7 @@ public class AlgUtil {
     public static byte[] aesCMAC(byte[] key, byte[] data) {
         byte[] cmac = new byte[16];
         BlockCipher cipher = new AESEngine();
-        org.spongycastle.crypto.Mac mac = new CMac(cipher, 128);
+        org.bouncycastle.crypto.Mac mac = new CMac(cipher, 128);
         CipherParameters params = new KeyParameter(key);
         mac.init(params);
         mac.update(data, 0, data.length);

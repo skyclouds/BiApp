@@ -437,7 +437,7 @@ public class CertUtil {
      * @return
      */
     public static String publicKey2PEMByPKCS8(RSAPublicKey publicKey) {
-        return Bytes.toPEMString("RSA PUBLIC KEY", publicKey2PKCS8(publicKey));
+        return Bytes.toPEMString("PUBLIC KEY", publicKey2PKCS8(publicKey));
     }
 
     /**
@@ -447,7 +447,7 @@ public class CertUtil {
      * @return
      */
     public static String privateKey2PEMByPKCS8(RSAPrivateCrtKey privateKey) {
-        return Bytes.toPEMString("RSA PRIVATE KEY", privateKey2PKCS8(privateKey));
+        return Bytes.toPEMString("PRIVATE KEY", privateKey2PKCS8(privateKey));
     }
 
     /**

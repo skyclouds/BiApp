@@ -2,6 +2,7 @@ package com.example.biapp;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.biapp.key.KeyAlgorithm;
 import com.biapp.util.AlgUtil;
 import com.biapp.util.CertUtil;
 import com.biapp.util.PrintfUtil;
@@ -368,9 +369,8 @@ public class AlgTest {
         derivedKey = Bytes.subBytes(derivedKey, 0, 32);
         PrintfUtil.d("DerivedKey", "" + Bytes.toHexString(derivedKey).equals(DerivedKey));
 
-        byte[] ingenicKey = AlgUtil.ingenicECDH(shareKey, KDH_pub, Bytes.fromHexString(KRD_nonce), Bytes.fromHexString(KDH_nonce), AlgUtil.IngenicECDHDerivedKeyType.KeyBlockProtect,
-                AlgUtil.IngenicECDHDerivedKeyAlgorithm.AES256);
+        byte[] ingenicKey = AlgUtil.ingenicECDH(shareKey, KDH_pub, Bytes.fromHexString(KRD_nonce), Bytes.fromHexString(KDH_nonce),
+                "KeyBlockProtect", KeyAlgorithm.AES, 32);
         PrintfUtil.d("IngenicKey", "" + Bytes.toHexString(ingenicKey).equals(DerivedKey));
     }
-
 }

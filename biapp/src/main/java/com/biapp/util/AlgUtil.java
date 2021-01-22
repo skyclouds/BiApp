@@ -1,5 +1,7 @@
 package com.biapp.util;
 
+import com.biapp.key.KeyAlgorithm;
+
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.Digest;
@@ -1157,56 +1159,19 @@ public class AlgUtil {
     }
 
     /**
-     * Ingenic ECDH 派生密钥类型
-     */
-    public enum IngenicECDHDerivedKeyType {
-        KeyBlockProtect("KeyBlockProtect"),
-        DataEncryption("DataEncryption"),
-        MesAuthentCode("MesAuthentCode");
-
-        private String name;
-
-        private IngenicECDHDerivedKeyType(final String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-    }
-
-    /**
-     * Ingenic ECDH 派生密钥算法
-     */
-    public enum IngenicECDHDerivedKeyAlgorithm {
-        TDES24,
-        AES128,
-        AES192,
-        AES256
-    }
-
-    /**
      * Ingenic ECDH 派生算法
      *
      * @param shareKey
      * @param KDHPublickKeyHex
      * @param KRDRandom
      * @param KDHRandom
-     * @param keyType
+     * @param keyType(KeyBlockProtect\DataEncryption\MesAuthentCode)
      * @param algorithm
+     * @param keyLen
      * @return
      */
     public static byte[] ingenicECDH(byte[] shareKey, String KDHPublickKeyHex, byte[] KRDRandom, byte[] KDHRandom,
-                                     IngenicECDHDerivedKeyType keyType, IngenicECDHDerivedKeyAlgorithm algorithm) {
+                                     String keyType, byte algorithm, int keyLen) {
         byte[] separator = new byte[]{0x00};
         ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDHPublickKeyHex);
         byte[] KDHPub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
@@ -1215,24 +1180,20 @@ public class AlgUtil {
                 Bytes.fromInt(256, 2));
         byte[] keyMaterial = AlgUtil.hmac(new SHA256Digest(), extractionResult, context);
         byte[] keyInfo = null;
-        int keyBitLength = 128;
-        if (algorithm == IngenicECDHDerivedKeyAlgorithm.TDES24) {
+        int keyBitLength = keyLen * 8;
+        if (algorithm == KeyAlgorithm.TDEA && keyLen == 24) {
             keyInfo = new byte[]{0x00, 0x01, 0x00, (byte) 0xC0};
-            keyBitLength = 192;
-        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES128) {
+        } else if (algorithm == KeyAlgorithm.AES && keyLen == 16) {
             keyInfo = new byte[]{0x00, 0x02, 0x00, (byte) 0x80};
-            keyBitLength = 128;
-        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES192) {
+        } else if (algorithm == KeyAlgorithm.AES && keyLen == 24) {
             keyInfo = new byte[]{0x00, 0x03, 0x00, (byte) 0xC0};
-            keyBitLength = 192;
-        } else if (algorithm == IngenicECDHDerivedKeyAlgorithm.AES256) {
+        } else if (algorithm == KeyAlgorithm.AES && keyLen == 32) {
             keyInfo = new byte[]{0x00, 0x04, 0x01, 0x00};
-            keyBitLength = 256;
         } else {
             throw new IllegalArgumentException("IngenicECDHDerivedKey Algorithm unknown");
         }
-        context = Bytes.concat(new byte[]{0x01, 0x00, 0x00, 0x00}, Strings.encode(keyType.getName()), separator,
-                keyInfo, Bytes.fromInt(keyBitLength, 4, Bytes.ENDIAN.LITTLE_ENDIAN));
+        context = Bytes.concat(new byte[]{0x01, 0x00, 0x00, 0x00}, Strings.encode(keyType), separator, keyInfo,
+                Bytes.fromInt(keyBitLength, 4, Bytes.ENDIAN.LITTLE_ENDIAN));
         byte[] derivedKey = AlgUtil.hmac(new SHA512Digest(), keyMaterial, context);
         derivedKey = Bytes.subBytes(derivedKey, 0, keyBitLength / 8);
         return derivedKey;

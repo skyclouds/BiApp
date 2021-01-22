@@ -1102,14 +1102,14 @@ public class Bytes {
      * @throws IllegalArgumentException
      */
     public static byte[] getDERLen(int value) throws IllegalArgumentException {
-        if ((value & 0xFF) < 0x00) {
+        if ((value) < 0x00) {
             throw new IllegalArgumentException("The value must large than 0.");
         } else {
-            if ((value & 0xFF) < 0x80) {
+            if ((value) < 0x80) {
                 return Bytes.fromInt(value, 1);
-            } else if ((value & 0xFF) <= 0xFF) {
+            } else if ((value) <= 0xFF) {
                 return Bytes.concat(new byte[]{(byte) 0x81}, Bytes.fromInt(value, 1));
-            } else if ((value & 0xFFFF) <= 0xFFFF) {
+            } else if ((value) <= 0xFFFF) {
                 return Bytes.concat(new byte[]{(byte) 0x82}, Bytes.fromInt(value, 2));
             } else {
                 throw new IllegalArgumentException("The value is too large");

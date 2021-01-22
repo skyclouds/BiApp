@@ -1,7 +1,5 @@
 package com.example.biapp;
 
-import android.util.Log;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.biapp.util.AlgUtil;
@@ -196,14 +194,11 @@ public class AlgTest {
         String privateHex = Bytes.toHexString(CertUtil.ECPrivateKey2Hex((ECPrivateKey) eccKeyPairs.getPrivate()));
         byte[] signed1 = AlgUtil.ECCSign(AlgUtil.ECCSignType.NONEwithECDSA, (ECPrivateKey) eccKeyPairs.getPrivate(), hash);
         boolean check1 = AlgUtil.ECCSignVerify(AlgUtil.ECCSignType.NONEwithECDSA, CertUtil.hex2ECPublicKey(eccCurve, publickHex), hash, signed1);
-        if (!check1) {
-            PrintfUtil.e("check1", check1 + "");
-        }
+        PrintfUtil.d("check1", check1 + "");
+
         byte[] signed2 = AlgUtil.ECCSign(AlgUtil.ECCSignType.NONEwithECDSA, CertUtil.hex2ECPrivateKey(eccCurve, privateHex), hash);
         boolean check2 = AlgUtil.ECCSignVerify(AlgUtil.ECCSignType.NONEwithECDSA, (ECPublicKey) eccKeyPairs.getPublic(), hash, signed2);
-        if (!check2) {
-            PrintfUtil.e("check2", check2 + "");
-        }
+        PrintfUtil.d("check2", check2 + "");
     }
 
     @Test

@@ -1158,44 +1158,155 @@ public class AlgUtil {
         return okm;
     }
 
+
     /**
      * Ingenic ECDH 派生算法
      *
      * @param shareKey
-     * @param KDHPublickKeyHex
-     * @param KRDRandom
-     * @param KDHRandom
-     * @param keyType(KeyBlockProtect\DataEncryption\MesAuthentCode)
+     * @param KDF1PublicKeyHex
+     * @param krdRandom
+     * @param kdhRandom
+     * @param label(KeyBlockProtect\DataEncryption\MesAuthentCode)
      * @param algorithm
      * @param keyLen
      * @return
      */
-    public static byte[] ingenicECDH(byte[] shareKey, String KDHPublickKeyHex, byte[] KRDRandom, byte[] KDHRandom,
-                                     String keyType, byte algorithm, int keyLen) {
-        byte[] separator = new byte[]{0x00};
-        ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDHPublickKeyHex);
-        byte[] KDHPub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
-        byte[] extractionResult = AlgUtil.hmac(new SHA256Digest(), KDHPub_X, shareKey);
-        byte[] context = Bytes.concat(new byte[]{0x01}, "KDK".getBytes(), separator, KDHPub_X, KRDRandom, KDHRandom,
-                Bytes.fromInt(256, 2));
-        byte[] keyMaterial = AlgUtil.hmac(new SHA256Digest(), extractionResult, context);
-        byte[] keyInfo = null;
-        int keyBitLength = keyLen * 8;
+    public static byte[] ingenicECDHDerivedKey(byte[] shareKey, String KDF1PublicKeyHex, byte[] krdRandom, byte[] kdhRandom,
+                                               String label, byte algorithm, int keyLen) {
+        ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDF1PublicKeyHex);
+        byte[] Pub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
+        byte[] extractionResult = AlgUtil.hmac(new SHA256Digest(), Pub_X, shareKey);
+        byte[] keyMaterial = PRF(extractionResult,
+                1, Bytes.ENDIAN.LITTLE_ENDIAN,
+                "KDK".getBytes(),
+                Bytes.concat(Pub_X, krdRandom, kdhRandom),
+                256, 2, Bytes.ENDIAN.BIG_ENDIAN,
+                new SHA256Digest());
+        byte[] derivedKeyContext = null;
         if (algorithm == KeyAlgorithm.TDEA && keyLen == 24) {
-            keyInfo = new byte[]{0x00, 0x01, 0x00, (byte) 0xC0};
+            derivedKeyContext = new byte[]{0x00, 0x01, 0x00, (byte) 0xC0};
         } else if (algorithm == KeyAlgorithm.AES && keyLen == 16) {
-            keyInfo = new byte[]{0x00, 0x02, 0x00, (byte) 0x80};
+            derivedKeyContext = new byte[]{0x00, 0x02, 0x00, (byte) 0x80};
         } else if (algorithm == KeyAlgorithm.AES && keyLen == 24) {
-            keyInfo = new byte[]{0x00, 0x03, 0x00, (byte) 0xC0};
+            derivedKeyContext = new byte[]{0x00, 0x03, 0x00, (byte) 0xC0};
         } else if (algorithm == KeyAlgorithm.AES && keyLen == 32) {
-            keyInfo = new byte[]{0x00, 0x04, 0x01, 0x00};
+            derivedKeyContext = new byte[]{0x00, 0x04, 0x01, 0x00};
         } else {
             throw new IllegalArgumentException("IngenicECDHDerivedKey Algorithm unknown");
         }
-        context = Bytes.concat(new byte[]{0x01, 0x00, 0x00, 0x00}, Strings.encode(keyType), separator, keyInfo,
-                Bytes.fromInt(keyBitLength, 4, Bytes.ENDIAN.LITTLE_ENDIAN));
-        byte[] derivedKey = AlgUtil.hmac(new SHA512Digest(), keyMaterial, context);
-        derivedKey = Bytes.subBytes(derivedKey, 0, keyBitLength / 8);
+        byte[] derivedKey = PRF(keyMaterial,
+                4, Bytes.ENDIAN.LITTLE_ENDIAN,
+                Strings.encode(label),
+                derivedKeyContext,
+                keyLen * 8, 4, Bytes.ENDIAN.LITTLE_ENDIAN,
+                new SHA512Digest());
         return derivedKey;
     }
+
+    /**
+     * Landi ECDH 派生算法
+     *
+     * @param shareKey
+     * @param KDF1PublicKeyHex
+     * @param krdRandom
+     * @param kdhRandom
+     * @param label(KBPK/KEAK/MacKey/DataKey)
+     * @param keyLen
+     * @param KDF1Digest
+     * @param KDF2Digest
+     * @return
+     */
+    public static byte[] landiECDHDerivedKey(byte[] shareKey, String KDF1PublicKeyHex, byte[] krdRandom, byte[] kdhRandom,
+                                             String label, int keyLen, Digest KDF1Digest, Digest KDF2Digest) {
+        ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDF1PublicKeyHex);
+        byte[] Pub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
+        byte[] extractionResult = AlgUtil.hmac(KDF1Digest, Bytes.concat(Pub_X, krdRandom, kdhRandom), shareKey);
+        byte[] keyMaterial = PRF(extractionResult,
+                4, Bytes.ENDIAN.LITTLE_ENDIAN,
+                "KDK".getBytes(),
+                Bytes.concat(Pub_X, krdRandom, kdhRandom),
+                256, 4, Bytes.ENDIAN.LITTLE_ENDIAN,
+                KDF1Digest);
+        byte[] derivedKey = PRF(keyMaterial,
+                4, Bytes.ENDIAN.LITTLE_ENDIAN,
+                Strings.encode(label),
+                Strings.encode("KRD and KDH"),
+                keyLen * 8, 4, Bytes.ENDIAN.LITTLE_ENDIAN,
+                KDF2Digest);
+        return derivedKey;
+    }
+
+
+    /**
+     * PRF运算
+     *
+     * @param inputKey
+     * @param counterLength
+     * @param counterEndian
+     * @param label
+     * @param context
+     * @param LBits
+     * @param LLength
+     * @param LEndian
+     * @return
+     */
+    private static byte[] PRF(byte[] inputKey, int counterLength, Bytes.ENDIAN counterEndian, byte[] label, byte[] context,
+                              int LBits, int LLength, Bytes.ENDIAN LEndian, Digest digest) {
+        int counter = 1;
+        byte[] separator = new byte[]{0x00};
+        int saltSize = 0;
+        if (digest instanceof SHA256Digest) {
+            saltSize = 256;
+        } else if (digest instanceof SHA384Digest) {
+            saltSize = 384;
+        } else if (digest instanceof SHA512Digest) {
+            saltSize = 512;
+        } else {
+            throw new IllegalArgumentException("Unknown digest");
+        }
+        int round = LBits / saltSize;
+        byte[] Context;
+        byte[] nKey;
+        String nKeyBits;
+        byte[] outputKey = null;
+        if (round == 0) {
+            Context = Bytes.concat(Bytes.fromInt(counter, counterLength, counterEndian), label, separator,
+                    context,
+                    Bytes.fromInt(LBits, LLength, LEndian));
+            nKey = AlgUtil.hmac(digest, inputKey, Context);
+            // 截取有效Bits
+            nKeyBits = Bytes.toBitString(nKey).substring(0, LBits);
+            // 左补0
+            nKeyBits = FormatUtil.addHead('0', 8 - LBits % 8, nKeyBits);
+            nKey = Bytes.bitString2Byte(nKeyBits);
+            outputKey = nKey;
+        } else {
+            for (int i = 0; i < round; i++) {
+                Context = Bytes.concat(Bytes.fromInt(counter, counterLength, counterEndian), label, separator,
+                        context,
+                        Bytes.fromInt(LBits, LLength, LEndian));
+                nKey = AlgUtil.hmac(digest, inputKey, Context);
+                if (Bytes.isNullOrEmpty(outputKey)) {
+                    outputKey = nKey;
+                } else {
+                    outputKey = Bytes.concat(outputKey, nKey);
+                }
+                counter++;
+            }
+            if (LBits % saltSize != 0) {
+                Context = Bytes.concat(Bytes.fromInt(counter, counterLength, counterEndian), label, separator,
+                        context,
+                        Bytes.fromInt(LBits, LLength, LEndian));
+                nKey = AlgUtil.hmac(digest, inputKey, Context);
+                // 截取有效Bits
+                nKeyBits = Bytes.toBitString(nKey).substring(0, LBits);
+                // 左补0
+                nKeyBits = FormatUtil.addHead('0', 8 - LBits % 8, nKeyBits);
+                nKey = Bytes.bitString2Byte(nKeyBits);
+                outputKey = Bytes.concat(outputKey, nKey);
+            }
+        }
+        return outputKey;
+    }
+
 }

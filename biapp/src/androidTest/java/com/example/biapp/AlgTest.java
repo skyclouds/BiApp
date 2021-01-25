@@ -370,7 +370,7 @@ public class AlgTest {
         PrintfUtil.d("DerivedKey", "" + Bytes.toHexString(derivedKey).equals(DerivedKey));
 
         byte[] ingenicKey = AlgUtil.ingenicECDHDerivedKey(shareKey, KDH_pub, Bytes.fromHexString(KRD_nonce), Bytes.fromHexString(KDH_nonce),
-                "KeyBlockProtect", KeyAlgorithm.AES, 32);
+                "KeyBlockProtect", KeyAlgorithm.AES, 32,new SHA256Digest(),new SHA512Digest());
         PrintfUtil.d("IngenicKey", "" + Bytes.toHexString(ingenicKey).equals(DerivedKey));
     }
 

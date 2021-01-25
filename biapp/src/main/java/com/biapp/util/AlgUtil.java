@@ -1169,19 +1169,21 @@ public class AlgUtil {
      * @param label(KeyBlockProtect\DataEncryption\MesAuthentCode)
      * @param algorithm
      * @param keyLen
+     * @param KDF1Digest
+     * @param KDF2Digest
      * @return
      */
     public static byte[] ingenicECDHDerivedKey(byte[] shareKey, String KDF1PublicKeyHex, byte[] krdRandom, byte[] kdhRandom,
-                                               String label, byte algorithm, int keyLen) {
+                                               String label, byte algorithm, int keyLen, Digest KDF1Digest, Digest KDF2Digest) {
         ECPublicKey ecPublicKey = CertUtil.hex2ECPublicKey(AlgUtil.ECCCurve.P_521, KDF1PublicKeyHex);
         byte[] Pub_X = Bytes.fromHexString('0' + ecPublicKey.getW().getAffineX().toString(16));
-        byte[] extractionResult = AlgUtil.hmac(new SHA256Digest(), Pub_X, shareKey);
+        byte[] extractionResult = AlgUtil.hmac(KDF1Digest, Pub_X, shareKey);
         byte[] keyMaterial = PRF(extractionResult,
                 1, Bytes.ENDIAN.LITTLE_ENDIAN,
                 "KDK".getBytes(),
                 Bytes.concat(Pub_X, krdRandom, kdhRandom),
                 256, 2, Bytes.ENDIAN.BIG_ENDIAN,
-                new SHA256Digest());
+                KDF1Digest);
         byte[] derivedKeyContext = null;
         if (algorithm == KeyAlgorithm.TDEA && keyLen == 24) {
             derivedKeyContext = new byte[]{0x00, 0x01, 0x00, (byte) 0xC0};
@@ -1199,7 +1201,7 @@ public class AlgUtil {
                 Strings.encode(label),
                 derivedKeyContext,
                 keyLen * 8, 4, Bytes.ENDIAN.LITTLE_ENDIAN,
-                new SHA512Digest());
+                KDF2Digest);
         return derivedKey;
     }
 

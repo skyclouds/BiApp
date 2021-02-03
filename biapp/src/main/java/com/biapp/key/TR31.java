@@ -287,7 +287,7 @@ public class TR31 {
         }
         // 释放
         Arrays.fill(bpk, (byte) 0x00);
-        Arrays.fill(keyBlockRandom, (byte) 0x00);
+        keyBlockRandom = null;
         // 转ASCII
         byte[] out_ascii = Strings.encode(Bytes.toHexString(out));
         PrintfUtil.d("Out-ASCII", new String(out_ascii));
@@ -419,7 +419,7 @@ public class TR31 {
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             paddingLen = 16 - (2 + key.length) % 16;
         }
-        if(Bytes.isNullOrEmpty(keyBlockRandom)){
+        if (keyBlockRandom == null) {
             keyBlockRandom = new SecureRandom().generateSeed(paddingLen);
         }
         PrintfUtil.d("KeyBlockRandom", Bytes.toHexString(keyBlockRandom));
@@ -686,7 +686,7 @@ public class TR31 {
         PrintfUtil.d("Key", Bytes.toHexString(key));
         // KeyBlockRandom
         int paddingLen = 0;
-        if (Bytes.isNullOrEmpty(keyBlockRandom)) {
+        if (keyBlockRandom == null) {
             if (keyBlockVersion == KeyBlockVersion.A ||
                     keyBlockVersion == KeyBlockVersion.B ||
                     keyBlockVersion == KeyBlockVersion.C) {
@@ -700,7 +700,7 @@ public class TR31 {
         PrintfUtil.d("PaddingLen", paddingLen + "");
         keyBlockRandom = Bytes.subBytes(keyBlock, 2 + keyLen, paddingLen);
         PrintfUtil.d("KeyBlockRandom", Bytes.toHexString(keyBlockRandom));
-        Arrays.fill(keyBlockRandom, (byte) 0x00);
+        keyBlockRandom = null;
         keyBlock = Bytes.subBytes(keyBlock, 0, 2 + keyLen + paddingLen);
         PrintfUtil.d("KeyBlock", Bytes.toHexString(keyBlock));
         byte[] checkMac = null;

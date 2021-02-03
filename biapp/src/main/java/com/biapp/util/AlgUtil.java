@@ -105,7 +105,8 @@ public class AlgUtil {
     public enum SymmetryModel {
 
         ECB("ECB"),
-        CBC("CBC");
+        CBC("CBC"),
+        CTR("CTR");
 
         private String name;
 

@@ -20,9 +20,19 @@ import aura.data.Strings;
 public class TR31 {
 
     /**
+     * TR31- Version A MAC域长度
+     */
+    public final static int KEY_BLOCK_VERSION_A_MAC_LENGTH = 8;
+
+    /**
      * TR31- Version B MAC域长度
      */
     public final static int KEY_BLOCK_VERSION_B_MAC_LENGTH = 16;
+
+    /**
+     * TR31- Version C MAC域长度
+     */
+    public final static int KEY_BLOCK_VERSION_C_MAC_LENGTH = 8;
 
     /**
      * TR31- Version D MAC域长度
@@ -214,6 +224,11 @@ public class TR31 {
         return this;
     }
 
+    public TR31 setKeyBlockRandom(byte[] keyBlockRandom) {
+        this.keyBlockRandom = keyBlockRandom;
+        return this;
+    }
+
     public byte[] getKeyBlockRandom() {
         return keyBlockRandom;
     }
@@ -259,12 +274,20 @@ public class TR31 {
         setKeyHead();
         // 设置KeyBlock
         setKeyBlock();
-        // 计算MAC
-        caclMAC(bpk);
-        // 计算OUT
-        caclOUT(bpk);
+        if (keyBlockVersion == KeyBlockVersion.A || keyBlockVersion == KeyBlockVersion.C) {
+            // 计算OUT
+            caclOUT(bpk);
+            // 计算MAC
+            caclMAC(bpk);
+        } else if (keyBlockVersion == KeyBlockVersion.B || keyBlockVersion == KeyBlockVersion.D) {
+            // 计算MAC
+            caclMAC(bpk);
+            // 计算OUT
+            caclOUT(bpk);
+        }
         // 释放
         Arrays.fill(bpk, (byte) 0x00);
+        Arrays.fill(keyBlockRandom, (byte) 0x00);
         // 转ASCII
         byte[] out_ascii = Strings.encode(Bytes.toHexString(out));
         PrintfUtil.d("Out-ASCII", new String(out_ascii));
@@ -279,9 +302,9 @@ public class TR31 {
      * 设置KeyHead
      */
     private void setKeyHead() {
-        // 暂不支持A、C KeyBlockVersion
-        if (!(keyBlockVersion == KeyBlockVersion.B || keyBlockVersion == KeyBlockVersion.D)) {
-            throw new IllegalArgumentException("Only Support KeyBlockVersion B/D");
+        if (!(keyBlockVersion == KeyBlockVersion.A || keyBlockVersion == KeyBlockVersion.B
+                || keyBlockVersion == KeyBlockVersion.C || keyBlockVersion == KeyBlockVersion.D)) {
+            throw new IllegalArgumentException("Only Support KeyBlockVersion A/B/C/D");
         }
         keyHead = new byte[]{keyBlockVersion};
         PrintfUtil.d("KeyBlockVersion", (char) keyBlockVersion + "");
@@ -389,12 +412,16 @@ public class TR31 {
         short keyLen = (short) (key.length * 8);
         // KeyBlockRandom
         int paddingLen = 0;
-        if (keyBlockVersion == KeyBlockVersion.B) {
+        if (keyBlockVersion == KeyBlockVersion.A ||
+                keyBlockVersion == KeyBlockVersion.B ||
+                keyBlockVersion == KeyBlockVersion.C) {
             paddingLen = 8 - (2 + key.length) % 8;
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             paddingLen = 16 - (2 + key.length) % 16;
         }
-        keyBlockRandom = new SecureRandom().generateSeed(paddingLen);
+        if(Bytes.isNullOrEmpty(keyBlockRandom)){
+            keyBlockRandom = new SecureRandom().generateSeed(paddingLen);
+        }
         PrintfUtil.d("KeyBlockRandom", Bytes.toHexString(keyBlockRandom));
         keyBlock = Bytes.concat(Bytes.fromInt(keyLen, 2), key, keyBlockRandom);
         PrintfUtil.d("KeyBlock", Bytes.toHexString(keyBlock));
@@ -407,7 +434,12 @@ public class TR31 {
      */
     private void caclMAC(byte[] bpk) {
         byte[] macKey = null;
-        if (keyBlockVersion == KeyBlockVersion.B) {
+        if (keyBlockVersion == KeyBlockVersion.A) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x4D);
+            macKey = Bytes.xor(xor, bpk);
+            mac = Bytes.subBytes(AlgUtil.ISO16609_1_MACAlgorithm1(macKey, Bytes.concat(keyHead, out), AlgUtil.MacAlgorithmPadding.Method1), 0, 4);
+        } else if (keyBlockVersion == KeyBlockVersion.B) {
             macKey = desDeriveMacKey(bpk);
             tr31Length = keyHead.length + keyBlock.length * 2 + KEY_BLOCK_VERSION_B_MAC_LENGTH;
             byte[] tr31LenData = String.format("%04d", tr31Length).getBytes();
@@ -416,6 +448,11 @@ public class TR31 {
             keyHead[3] = tr31LenData[2];
             keyHead[4] = tr31LenData[3];
             mac = AlgUtil.tdesCMAC(macKey, Bytes.concat(keyHead, keyBlock));
+        } else if (keyBlockVersion == KeyBlockVersion.C) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x4D);
+            macKey = Bytes.xor(xor, bpk);
+            mac = Bytes.subBytes(AlgUtil.ISO16609_1_MACAlgorithm1(macKey, Bytes.concat(keyHead, out), AlgUtil.MacAlgorithmPadding.Method1), 0, 4);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             macKey = aesDeriveMacKey(bpk);
             tr31Length = keyHead.length + keyBlock.length * 2 + KEY_BLOCK_VERSION_D_MAC_LENGTH;
@@ -439,10 +476,34 @@ public class TR31 {
      */
     private void caclOUT(byte[] bpk) {
         byte[] encKey = null;
-        if (keyBlockVersion == KeyBlockVersion.B) {
+        if (keyBlockVersion == KeyBlockVersion.A) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x45);
+            encKey = Bytes.xor(xor, bpk);
+            tr31Length = keyHead.length + keyBlock.length * 2 + KEY_BLOCK_VERSION_A_MAC_LENGTH;
+            byte[] tr31LenData = String.format("%04d", tr31Length).getBytes();
+            keyHead[1] = tr31LenData[0];
+            keyHead[2] = tr31LenData[1];
+            keyHead[3] = tr31LenData[2];
+            keyHead[4] = tr31LenData[3];
+            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, Bytes.subBytes(keyHead, 0, 8), keyBlock);
+        } else if (keyBlockVersion == KeyBlockVersion.B) {
             encKey = desDeriveEncKey(bpk);
             out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
                     AlgUtil.SymmetryPadding.NoPadding, encKey, mac, keyBlock);
+        } else if (keyBlockVersion == KeyBlockVersion.C) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x45);
+            encKey = Bytes.xor(xor, bpk);
+            tr31Length = keyHead.length + keyBlock.length * 2 + KEY_BLOCK_VERSION_A_MAC_LENGTH;
+            byte[] tr31LenData = String.format("%04d", tr31Length).getBytes();
+            keyHead[1] = tr31LenData[0];
+            keyHead[2] = tr31LenData[1];
+            keyHead[3] = tr31LenData[2];
+            keyHead[4] = tr31LenData[3];
+            out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, Bytes.subBytes(keyHead, 0, 8), keyBlock);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             encKey = aesDeriveEncKey(bpk);
             out = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.SymmetryModel.CBC,
@@ -471,8 +532,9 @@ public class TR31 {
         // KeyBlockVersion
         this.keyBlockVersion = tr31[index++];
         PrintfUtil.d("KeyBlockVersion", (char) keyBlockVersion + "");
-        if (!(keyBlockVersion == KeyBlockVersion.B || keyBlockVersion == KeyBlockVersion.D)) {
-            throw new IllegalArgumentException("Only Support KeyBlockVersion B/D");
+        if (!(keyBlockVersion == KeyBlockVersion.A || keyBlockVersion == KeyBlockVersion.B
+                || keyBlockVersion == KeyBlockVersion.C || keyBlockVersion == KeyBlockVersion.D)) {
+            throw new IllegalArgumentException("Only Support KeyBlockVersion A/B/C/D");
         }
         // Tr31Len
         this.tr31Length = Integer.parseInt(Strings.decode(Bytes.subBytes(tr31, index, 4)));
@@ -571,8 +633,12 @@ public class TR31 {
         // KeyHead
         keyHead = Bytes.subBytes(tr31, 0, index);
         PrintfUtil.d("KeyHead", Bytes.toHexString(keyHead));
-        if (keyBlockVersion == KeyBlockVersion.B) {
+        if (keyBlockVersion == KeyBlockVersion.A) {
+            macLen = KEY_BLOCK_VERSION_A_MAC_LENGTH;
+        } else if (keyBlockVersion == KeyBlockVersion.B) {
             macLen = KEY_BLOCK_VERSION_B_MAC_LENGTH;
+        } else if (keyBlockVersion == KeyBlockVersion.C) {
+            macLen = KEY_BLOCK_VERSION_C_MAC_LENGTH;
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             macLen = KEY_BLOCK_VERSION_D_MAC_LENGTH;
         }
@@ -588,10 +654,22 @@ public class TR31 {
         PrintfUtil.d("Mac", Bytes.toHexString(mac));
         // KeyBolck
         byte[] encKey = null;
-        if (keyBlockVersion == KeyBlockVersion.B) {
+        if (keyBlockVersion == KeyBlockVersion.A) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x45);
+            encKey = Bytes.xor(xor, bpk);
+            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, Bytes.subBytes(keyHead, 0, 8), out);
+        } else if (keyBlockVersion == KeyBlockVersion.B) {
             encKey = desDeriveEncKey(bpk);
             keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
                     AlgUtil.SymmetryPadding.NoPadding, encKey, mac, out);
+        } else if (keyBlockVersion == KeyBlockVersion.C) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x45);
+            encKey = Bytes.xor(xor, bpk);
+            keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.TDES, AlgUtil.SymmetryModel.CBC,
+                    AlgUtil.SymmetryPadding.NoPadding, encKey, Bytes.subBytes(keyHead, 0, 8), out);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             encKey = aesDeriveEncKey(bpk);
             keyBlock = AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.AES, AlgUtil.SymmetryModel.CBC,
@@ -608,8 +686,10 @@ public class TR31 {
         PrintfUtil.d("Key", Bytes.toHexString(key));
         // KeyBlockRandom
         int paddingLen = 0;
-        if (keyBlockRandom == null) {
-            if (keyBlockVersion == KeyBlockVersion.B) {
+        if (Bytes.isNullOrEmpty(keyBlockRandom)) {
+            if (keyBlockVersion == KeyBlockVersion.A ||
+                    keyBlockVersion == KeyBlockVersion.B ||
+                    keyBlockVersion == KeyBlockVersion.C) {
                 paddingLen = 8 - (2 + key.length) % 8;
             } else if (keyBlockVersion == KeyBlockVersion.D) {
                 paddingLen = 16 - (2 + key.length) % 16;
@@ -620,14 +700,27 @@ public class TR31 {
         PrintfUtil.d("PaddingLen", paddingLen + "");
         keyBlockRandom = Bytes.subBytes(keyBlock, 2 + keyLen, paddingLen);
         PrintfUtil.d("KeyBlockRandom", Bytes.toHexString(keyBlockRandom));
+        Arrays.fill(keyBlockRandom, (byte) 0x00);
         keyBlock = Bytes.subBytes(keyBlock, 0, 2 + keyLen + paddingLen);
         PrintfUtil.d("KeyBlock", Bytes.toHexString(keyBlock));
         byte[] checkMac = null;
         // 校验MAC
         byte[] macKey = null;
-        if (keyBlockVersion == KeyBlockVersion.B) {
+        if (keyBlockVersion == KeyBlockVersion.A) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x4D);
+            macKey = Bytes.xor(xor, bpk);
+            checkMac = Bytes.subBytes(AlgUtil.ISO16609_1_MACAlgorithm1(macKey, Bytes.concat(keyHead, out),
+                    AlgUtil.MacAlgorithmPadding.Method1), 0, 4);
+        } else if (keyBlockVersion == KeyBlockVersion.B) {
             macKey = desDeriveMacKey(bpk);
             checkMac = AlgUtil.tdesCMAC(macKey, Bytes.concat(keyHead, keyBlock));
+        } else if (keyBlockVersion == KeyBlockVersion.C) {
+            byte[] xor = new byte[bpk.length];
+            Arrays.fill(xor, (byte) 0x4D);
+            macKey = Bytes.xor(xor, bpk);
+            checkMac = Bytes.subBytes(AlgUtil.ISO16609_1_MACAlgorithm1(macKey, Bytes.concat(keyHead, out),
+                    AlgUtil.MacAlgorithmPadding.Method1), 0, 4);
         } else if (keyBlockVersion == KeyBlockVersion.D) {
             macKey = aesDeriveMacKey(bpk);
             checkMac = AlgUtil.aesCMAC(macKey, Bytes.concat(keyHead, keyBlock));

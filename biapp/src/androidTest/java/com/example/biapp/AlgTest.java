@@ -40,7 +40,7 @@ public class AlgTest {
         byte[] encrypt_TDES = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.TDES,
                 AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.ZeroBytePadding, key24, iv8, data);
         byte[] encrypt_AES = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.AES,
-                AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.ZeroBytePadding, key32, iv16, data);
+                AlgUtil.SymmetryModel.CTR, AlgUtil.SymmetryPadding.ZeroBytePadding, key32, iv16, data);
         byte[] encrypt_SM4 = AlgUtil.encrypt(AlgUtil.SymmetryAlgorithm.SM4,
                 AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.PKCS5Padding, key16, iv16, data);
 
@@ -54,7 +54,7 @@ public class AlgTest {
                         encrypt_TDES)).equals(Bytes.toHexString(data)));
         PrintfUtil.d("AES",
                 "" + Bytes.toHexString(AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.AES,
-                        AlgUtil.SymmetryModel.CBC, AlgUtil.SymmetryPadding.ZeroBytePadding, key32, iv16,
+                        AlgUtil.SymmetryModel.CTR, AlgUtil.SymmetryPadding.ZeroBytePadding, key32, iv16,
                         encrypt_AES)).equals(Bytes.toHexString(data)));
         PrintfUtil.d("SM4",
                 "" + Bytes.toHexString(AlgUtil.decrypt(AlgUtil.SymmetryAlgorithm.SM4,

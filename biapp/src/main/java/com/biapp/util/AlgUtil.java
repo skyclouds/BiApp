@@ -688,6 +688,7 @@ public class AlgUtil {
             ksnData[9] = 0x01;
             initKSN = Bytes.toHexString(ksnData);
         } else if (ksnData.length == 12) {
+            ksnData[8] = 0x00;
             ksnData[9] = 0x00;
             ksnData[10] = 0x00;
             ksnData[11] = 0x01;

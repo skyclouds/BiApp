@@ -674,6 +674,31 @@ public class AlgUtil {
     }
 
     /**
+     * 初始化KSN
+     *
+     * @param ksn
+     * @return
+     */
+    public static String initKSN(String ksn) {
+        String initKSN = "";
+        byte[] ksnData = Bytes.fromHexString(ksn);
+        if (ksnData.length == 10) {
+            ksnData[7] &= 0xE0;
+            ksnData[8] = 0x00;
+            ksnData[9] = 0x01;
+            initKSN = Bytes.toHexString(ksnData);
+        } else if (ksnData.length == 12) {
+            ksnData[9] = 0x00;
+            ksnData[10] = 0x00;
+            ksnData[11] = 0x01;
+            initKSN = Bytes.toHexString(ksnData);
+        } else {
+            throw new IllegalArgumentException("ksn length error");
+        }
+        return initKSN;
+    }
+
+    /**
      * KSN+1
      *
      * @param ksn

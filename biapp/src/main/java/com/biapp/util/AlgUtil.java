@@ -533,11 +533,11 @@ public class AlgUtil {
      */
     public static byte[] ingenicHMACKCV(byte[] key) {
         if (key.length == 16) {
-            return hmac(new SHA256Digest(), key, "".getBytes());
+            return Bytes.subBytes(hmac(new SHA256Digest(), key, "".getBytes()),0,3);
         } else if (key.length == 24) {
-            return hmac(new SHA384Digest(), key, "".getBytes());
+            return Bytes.subBytes(hmac(new SHA384Digest(), key, "".getBytes()),0,3);
         } else if (key.length == 32) {
-            return hmac(new SHA512Digest(), key, "".getBytes());
+            return Bytes.subBytes(hmac(new SHA512Digest(), key, "".getBytes()),0,3);
         } else {
             throw new IllegalArgumentException("key length error");
         }
